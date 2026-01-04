@@ -80,7 +80,13 @@
 }
 
 body {
+  /* Use the fish pattern with a dark overlay to ensure text is readable */
   background-color: var(--background);
+  background-image: linear-gradient(rgba(15, 23, 42, 0.85), rgba(15, 23, 42, 0.95)), url('/fish-bg.png') !important;
+  background-attachment: fixed;
+  background-size: 300px;
+  background-repeat: repeat;
+
   color: var(--foreground);
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;

@@ -30,7 +30,7 @@ export default function LandingPage() {
     <div className="flex flex-col min-h-screen">
       {/* Hero Section */}
       <section className="relative overflow-hidden pt-20 pb-32 md:pt-32">
-        <div className="absolute inset-0 bg-gradient-to-br from-background via-background to-primary/10 -z-10" />
+        <div className="absolute inset-0 bg-gradient-to-br from-transparent via-transparent to-primary/10 -z-10" />
         <div className="container px-4 mx-auto text-center">
           <motion.h1
             initial={{ opacity: 0, y: 30 }}
