@@ -13,6 +13,8 @@ export async function POST(request: Request) {
             answer = "För gädda fungerar stora gummibeten eller jerkbaits bäst just nu. För abborre skulle jag prova en mindre jigg i naturliga färger.";
         } else if (message.toLowerCase().includes("väder")) {
             answer = "Mulet väder med lite vind är ofta optimalt för gäddfiske (" + "Gäddväder" + "). Högtryck kan göra fisken passiv.";
+        } else if (message.toLowerCase().includes("hej")) {
+            answer = "Hej! Vad kan jag hjälpa dig med inom fiske idag?";
         }
 
         return NextResponse.json({
