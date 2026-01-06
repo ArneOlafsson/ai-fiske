@@ -48,41 +48,48 @@
   }
 }
 
-/* Premium Dark Theme (Default) */
+/* Bright & Light Theme (White & Orange) */
 :root {
-  --background: #0f172a;
+  --background: #ffffff;
+  /* White */
+  --foreground: #0f172a;
   /* Slate 900 */
-  --foreground: #f8fafc;
-  /* Slate 50 */
-  --card: #1e293b;
-  /* Slate 800 */
-  --card-foreground: #f8fafc;
-  --popover: #1e293b;
-  --popover-foreground: #f8fafc;
-  --primary: #38bdf8;
-  /* Sky 400 - Vibrant Blue */
-  --primary-foreground: #0f172a;
-  --secondary: #334155;
-  /* Slate 700 */
-  --secondary-foreground: #f8fafc;
-  --muted: #334155;
-  --muted-foreground: #94a3b8;
-  /* Slate 400 */
-  --accent: #0ea5e9;
-  /* Sky 500 */
-  --accent-foreground: #0f172a;
+  --card: #ffffff;
+  /* White */
+  --card-foreground: #0f172a;
+  /* Slate 900 */
+  --popover: #ffffff;
+  --popover-foreground: #0f172a;
+  --primary: #f97316;
+  /* Orange 500 - Vibrant Orange */
+  --primary-foreground: #ffffff;
+  /* White */
+  --secondary: #f1f5f9;
+  /* Slate 100 */
+  --secondary-foreground: #0f172a;
+  --muted: #f1f5f9;
+  /* Slate 100 */
+  --muted-foreground: #64748b;
+  /* Slate 500 */
+  --accent: #fff7ed;
+  /* Orange 50 */
+  --accent-foreground: #ea580c;
+  /* Orange 600 */
   --destructive: #ef4444;
-  --destructive-foreground: #f8fafc;
-  --border: #334155;
-  --input: #334155;
-  --ring: #38bdf8;
+  --destructive-foreground: #ffffff;
+  --border: #e2e8f0;
+  /* Slate 200 */
+  --input: #e2e8f0;
+  /* Slate 200 */
+  --ring: #f97316;
+  /* Orange 500 */
   --radius: 0.75rem;
 }
 
 body {
-  /* Use the fish pattern with a dark overlay to ensure text is readable */
+  /* Use the fish pattern with a light overlay */
   background-color: var(--background);
-  background-image: linear-gradient(rgba(15, 23, 42, 0.85), rgba(15, 23, 42, 0.95)), url('/fish-bg.png') !important;
+  background-image: linear-gradient(rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.95)), url('/fish-bg.png') !important;
   background-attachment: fixed;
   background-size: 300px;
   background-repeat: repeat;
@@ -92,18 +99,18 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
-/* Utility classes for Glassmorphism */
+/* Utility classes for Glassmorphism (Light/Frosty) */
 .glass {
-  background: rgba(30, 41, 59, 0.7);
+  background: rgba(255, 255, 255, 0.7);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
-  border: 1px solid rgba(148, 163, 184, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.5);
 }
 
 .glass-card {
-  background: rgba(30, 41, 59, 0.7);
+  background: rgba(255, 255, 255, 0.7);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
-  border: 1px solid rgba(148, 163, 184, 0.1);
-  @apply rounded-xl shadow-lg;
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  @apply rounded-xl shadow-sm;
 }
