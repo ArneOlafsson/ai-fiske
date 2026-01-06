@@ -35,10 +35,10 @@ export async function POST(request: Request) {
                     price_data: {
                         currency: 'sek',
                         product_data: {
-                            name: 'AI Fiskeassistent Premium',
-                            description: 'Livstids tillgång + 500 identifieringar',
+                            name: 'AI Fiskeassistent Lifetime',
+                            description: 'Livstids tillgång + Obegränsad AI',
                         },
-                        unit_amount: 9900, // 99.00 SEK
+                        unit_amount: 29900, // 299.00 SEK
                     },
                     quantity: 1,
                 },

@@ -2,7 +2,7 @@
 
 import { useAuth } from '@/components/AuthProvider';
 import { Button, Card } from '@/components/ui/primitives';
-import { Crown, Settings, LogOut, Check, Trash2, Globe, Lock } from 'lucide-react';
+import { Crown, Settings, LogOut, Check, Trash2, Globe, Lock, Timer, Ticket } from 'lucide-react';
 import { signOut } from 'firebase/auth';
 import { auth, db } from '@/lib/firebase';
 import { useRouter } from 'next/navigation';
@@ -19,17 +19,25 @@ function ProfileContent() {
     const searchParams = useSearchParams();
     const [myCatches, setMyCatches] = useState<Catch[]>([]);
     const [loadingCatches, setLoadingCatches] = useState(true);
+    const [promoCode, setPromoCode] = useState('');
+    const [redeeming, setRedeeming] = useState(false);
 
     useEffect(() => {
         if (user && searchParams.get('payment') === 'success_mock') {
-            // Call Mock Upgrade
-            fetch('/api/admin/upgrade', {
-                method: 'POST',
-                body: JSON.stringify({ uid: user.uid })
+            // Client-side Mock Upgrade for MVP/Demo
+            updateDoc(doc(db, 'users', user.uid), {
+                isPremium: true,
+                premiumType: 'lifetime',
+                stripePaymentStatus: 'mock_paid',
+                aiQuotaTotal: 500
             }).then(() => {
                 // Remove param
                 router.replace('/profile');
-                alert("Mock Betalning Lyckades! Du är nu Premium.");
+                alert("Mock Betalning Lyckades! Du är nu Premium (Lifetime).");
+                window.location.reload();
+            }).catch(err => {
+                console.error("Mock upgrade failed", err);
+                alert("Kunde inte uppgradera: " + err.message);
             });
         }
     }, [user, searchParams, router]);
@@ -38,11 +46,26 @@ function ProfileContent() {
         if (!user) return;
         const q = query(
             collection(db, 'catches'),
-            where('ownerUid', '==', user.uid),
-            orderBy('createdAt', 'desc')
+            where('ownerUid', '==', user.uid)
+            // Removed orderBy to avoid Index issues: orderBy('createdAt', 'desc')
         );
         const unsub = onSnapshot(q, (snapshot) => {
-            setMyCatches(snapshot.docs.map(d => ({ id: d.id, ...d.data() })) as Catch[]);
+            const firestoreCatches = snapshot.docs.map(d => ({ id: d.id, ...d.data({ serverTimestamps: 'estimate' }) })) as Catch[];
+
+            // Merge with Local Storage
+            const local = JSON.parse(localStorage.getItem('local_catches') || '[]');
+            // Filter out local items that might have been synced/duplicates (naive check by ID if possible, or just concat)
+            // For MVP simplicty: Just Display All unique by ID
+            const allCatches = [...firestoreCatches, ...local].filter((v, i, a) => a.findIndex(v2 => (v2.id === v.id)) === i);
+
+            // Sort Client-side
+            allCatches.sort((a, b) => {
+                const tA = a.createdAt?.seconds ? a.createdAt.seconds * 1000 : (a.createdAt?.toDate ? a.createdAt.toDate().getTime() : new Date(a.createdAt).getTime());
+                const tB = b.createdAt?.seconds ? b.createdAt.seconds * 1000 : (b.createdAt?.toDate ? b.createdAt.toDate().getTime() : new Date(b.createdAt).getTime());
+                return (tB || 0) - (tA || 0);
+            });
+
+            setMyCatches(allCatches);
             setLoadingCatches(false);
         });
         return () => unsub();
@@ -50,6 +73,7 @@ function ProfileContent() {
 
     const handleLogout = async () => {
         await signOut(auth);
+        localStorage.removeItem('dev_mode_user');
         router.push('/');
     };
 
@@ -67,6 +91,41 @@ function ProfileContent() {
             }
         } catch (err) {
             console.error("Checkout failed", err);
+        }
+    };
+
+    const handleRedeemPromo = async () => {
+        if (!promoCode) return;
+        setRedeeming(true);
+        try {
+            // Client-side validation for MVP (since server might lack Service Account)
+            const code = promoCode.trim().toUpperCase();
+            if (code === 'FISKE2026') {
+                if (!user) return;
+
+                const now = new Date();
+                const expiresAt = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000); // 7 days
+
+                await updateDoc(doc(db, 'users', user.uid), {
+                    isPremium: true,
+                    premiumType: 'trial',
+                    premiumSince: new Date(),
+                    premiumExpiresAt: expiresAt,
+                    aiQuotaTotal: 50
+                });
+
+                alert("Kod aktiverad! Du har nu 7 dagar Premium.");
+                window.location.reload();
+            } else {
+                // Optional: Fallback to server if needed, or just reject
+                // For now, simple client check is enough
+                alert("Ogiltig kod");
+            }
+        } catch (err: any) {
+            console.error("Promo redeem failed", err);
+            alert("Något gick fel: " + err.message);
+        } finally {
+            setRedeeming(false);
         }
     };
 
@@ -112,7 +171,17 @@ function ProfileContent() {
                     <div className="space-y-4">
                         <div>
                             <p className="text-sm font-medium text-muted-foreground mb-1">Status</p>
-                            <p className="text-xl font-bold">{profile.isPremium ? 'Aktiv (Livstid)' : 'Gratiskonto (Begränsat)'}</p>
+                            <p className="text-xl font-bold">
+                                {profile.isPremium
+                                    ? (profile.premiumType === 'lifetime' ? 'Lifetime Premium' : 'Premium (Provperiod)')
+                                    : 'Gratiskonto (Begränsat)'}
+                            </p>
+                            {profile.premiumExpiresAt && (
+                                <p className="text-xs text-muted-foreground flex items-center gap-1 mt-1">
+                                    <Timer className="w-3 h-3" />
+                                    Går ut: {profile.premiumExpiresAt.toDate().toLocaleDateString()}
+                                </p>
+                            )}
                         </div>
 
                         <div>
@@ -129,9 +198,33 @@ function ProfileContent() {
                         </div>
 
                         {!profile.isPremium && (
-                            <Button onClick={handleBuyPremium} className="w-full bg-amber-500 hover:bg-amber-600 text-white mt-2">
-                                Uppgradera för 99 kr
-                            </Button>
+                            <div className="space-y-4">
+                                <Button onClick={handleBuyPremium} className="w-full bg-orange-500 hover:bg-orange-600 text-white font-bold h-12">
+                                    Köp Lifetime Deal (299 kr)
+                                </Button>
+
+                                <div className="pt-4 border-t border-border">
+                                    <p className="text-sm font-medium mb-2 flex items-center gap-2">
+                                        <Ticket className="w-4 h-4" /> Har du en kod?
+                                    </p>
+                                    <div className="flex gap-2">
+                                        <input
+                                            type="text"
+                                            placeholder="Ange kod..."
+                                            className="flex-1 rounded-md border border-input bg-background px-3 py-2 text-sm"
+                                            value={promoCode}
+                                            onChange={(e) => setPromoCode(e.target.value)}
+                                        />
+                                        <Button
+                                            onClick={handleRedeemPromo}
+                                            disabled={!promoCode || redeeming}
+                                            variant="secondary"
+                                        >
+                                            {redeeming ? '...' : 'Aktivera'}
+                                        </Button>
+                                    </div>
+                                </div>
+                            </div>
                         )}
                     </div>
                 </Card>

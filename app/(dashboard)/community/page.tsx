@@ -94,8 +94,8 @@ export default function CommunityPage() {
         const q = query(
             collection(db, 'catches'),
             where('isPublic', '==', true),
-            orderBy('createdAt', 'desc'),
             limit(20)
+            // Removed orderBy('createdAt', 'desc') to avoid missing Index
         );
 
         const getLocalCatches = () => {
@@ -125,19 +125,27 @@ export default function CommunityPage() {
         const unsubscribe = onSnapshot(q, (snapshot) => {
             const items = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Catch[];
 
-            if (items.length === 0) {
-                const local = getLocalCatches();
-                setCatches([...local, ...MOCK_CATCHES]);
+            // Allow merging local catches (for the user's own view) even if DB has items
+            const local = getLocalCatches();
+
+            // Combine and Dedup (by ID)
+            const allItems = [...items, ...local].filter((v, i, a) => a.findIndex(v2 => (v2.id === v.id)) === i);
+
+            // Sort Client-side (descending)
+            allItems.sort((a, b) => {
+                const tA = a.createdAt?.seconds ? a.createdAt.seconds * 1000 : (a.createdAt?.toDate ? a.createdAt.toDate().getTime() : (a.createdAt ? new Date(a.createdAt).getTime() : 0));
+                const tB = b.createdAt?.seconds ? b.createdAt.seconds * 1000 : (b.createdAt?.toDate ? b.createdAt.toDate().getTime() : (b.createdAt ? new Date(b.createdAt).getTime() : 0));
+                return (tB || 0) - (tA || 0);
+            });
+
+            if (allItems.length === 0) {
+                setCatches(MOCK_CATCHES);
             } else {
-                // Also Try to inject local for hybrid test?
-                // For now, if DB works, just use DB items.
-                // But for Dev User, we might prefer local + mock.
-                // Sticky situation. Let's assume if items > 0, we trust DB.
-                setCatches(items);
+                setCatches(allItems);
             }
             setLoading(false);
         }, (err) => {
-            console.warn("Snapshot failed (Mock Mode?), falling back", err);
+            console.warn("Snapshot failed, falling back", err);
             const local = getLocalCatches();
             setCatches([...local, ...MOCK_CATCHES]);
             setLoading(false);
@@ -289,7 +297,7 @@ export default function CommunityPage() {
                                     )}
                                 </div>
 
-                                <CommentSection catchId={item.id} />
+                                <CommentSection catchId={item.id} count={item.commentsCount || 0} />
                             </div>
                         </div>
                     </Card>

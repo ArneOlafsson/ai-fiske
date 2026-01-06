@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '@/components/AuthProvider';
 import { Button, Input } from '@/components/ui/primitives';
 import { db } from '@/lib/firebase';
-import { collection, addDoc, query, orderBy, onSnapshot, serverTimestamp, deleteDoc, doc } from 'firebase/firestore';
+import { collection, addDoc, query, orderBy, onSnapshot, serverTimestamp, deleteDoc, doc, updateDoc, increment } from 'firebase/firestore';
 import { Comment } from '@/lib/types';
 import { MessageSquare, Trash2, Send } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
@@ -12,9 +12,10 @@ import { sv } from 'date-fns/locale';
 
 interface CommentSectionProps {
     catchId: string;
+    count?: number;
 }
 
-export default function CommentSection({ catchId }: CommentSectionProps) {
+export default function CommentSection({ catchId, count = 0 }: CommentSectionProps) {
     const { user, profile } = useAuth();
     const [comments, setComments] = useState<Comment[]>([]);
     const [newComment, setNewComment] = useState('');
@@ -80,6 +81,12 @@ export default function CommentSection({ catchId }: CommentSectionProps) {
                 text: newComment.trim(),
                 createdAt: serverTimestamp()
             });
+
+            // Update parent count
+            await updateDoc(doc(db, 'catches', catchId), {
+                commentsCount: increment(1)
+            });
+
             setNewComment('');
         } catch (err) {
             console.error("Failed to post comment", err);
@@ -96,6 +103,10 @@ export default function CommentSection({ catchId }: CommentSectionProps) {
                 return;
             }
             await deleteDoc(doc(db, 'catches', catchId, 'comments', commentId));
+            // Update parent count
+            await updateDoc(doc(db, 'catches', catchId), {
+                commentsCount: increment(-1)
+            });
         } catch (err) {
             console.error("Failed to delete", err);
         }
@@ -110,7 +121,7 @@ export default function CommentSection({ catchId }: CommentSectionProps) {
                 onClick={() => setIsOpen(!isOpen)}
             >
                 <MessageSquare className="w-4 h-4" />
-                {isOpen ? 'Dölj kommentarer' : `Visa kommentarer (${comments.length})`}
+                {isOpen ? 'Dölj kommentarer' : `Visa kommentarer (${Math.max(count, comments.length)})`}
             </Button>
 
             {isOpen && (

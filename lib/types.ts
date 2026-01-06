@@ -1,7 +1,7 @@
 import { Timestamp } from "firebase/firestore";
 
 export type UserRole = "guest" | "user" | "admin";
-export type PremiumType = "none" | "lifetime";
+export type PremiumType = "none" | "lifetime" | "trial";
 
 export interface UserProfile {
     uid: string;
@@ -11,6 +11,7 @@ export interface UserProfile {
     createdAt: Timestamp;
     isPremium: boolean;
     premiumType: PremiumType;
+    premiumExpiresAt?: Timestamp;
     stripeCustomerId?: string;
     stripePaymentStatus?: string;
     aiQuotaTotal: number;

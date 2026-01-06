@@ -31,7 +31,7 @@ export default function RegisterPage() {
                     createdAt: serverTimestamp(),
                     isPremium: false,
                     premiumType: 'none',
-                    aiQuotaTotal: 500,
+                    aiQuotaTotal: 3,
                     aiQuotaUsed: 0,
                     role: 'user',
                     banned: false
@@ -80,7 +80,7 @@ export default function RegisterPage() {
                     createdAt: serverTimestamp(),
                     isPremium: false,
                     premiumType: 'none',
-                    aiQuotaTotal: 500,
+                    aiQuotaTotal: 3,
                     aiQuotaUsed: 0,
                     role: 'user',
                     banned: false

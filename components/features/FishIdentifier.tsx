@@ -24,7 +24,7 @@ export default function FishIdentifier() {
     const [locationText, setLocationText] = useState('');
     const [waterType, setWaterType] = useState('sjö');
     const [comment, setComment] = useState('');
-    const [isPublic, setIsPublic] = useState(false);
+    const [isPublic, setIsPublic] = useState(true);
 
     const router = useRouter();
 
@@ -114,27 +114,66 @@ export default function FishIdentifier() {
         console.log("Force Reset Loading State");
     }, []);
 
+    // Helper to convert Blob URL to Base64 with Resizing
+    const blobToBase64 = async (blobUrl: string): Promise<string> => {
+        return new Promise((resolve, reject) => {
+            const img = new window.Image();
+            img.src = blobUrl;
+            img.onload = () => {
+                const canvas = document.createElement('canvas');
+                const MAX_WIDTH = 800; // Resize to max 800px width to check 1MB limit
+                const scale = MAX_WIDTH / img.width;
+                const width = scale < 1 ? MAX_WIDTH : img.width;
+                const height = scale < 1 ? img.height * scale : img.height;
+
+                canvas.width = width;
+                canvas.height = height;
+                const ctx = canvas.getContext('2d');
+                if (!ctx) {
+                    reject(new Error("Canvas context failed"));
+                    return;
+                }
+                ctx.drawImage(img, 0, 0, width, height);
+                // Compress to JPEG 0.7
+                resolve(canvas.toDataURL('image/jpeg', 0.7));
+            };
+            img.onerror = reject;
+        });
+    };
+
     const handleSaveCatch = async () => {
         if (!user) return;
 
         console.log("Starting save process...");
         setLoading(true);
 
-        // Safety valve: Force stop loading after 5 seconds no matter what
-        // This is a last resort against UI freezing
+        // Safety valve
         const safetyValve = setTimeout(() => {
             if (loading) {
-                console.warn("Safety valve triggered!");
                 setLoading(false);
-                alert("Operation timed out (Safety Valve).");
+                alert("Operation timed out.");
             }
-        }, 5000);
+        }, 8000);
 
         try {
+            // Determine Image URL (Storage vs Base64 Fallback)
+            let finalImageUrl = uploadedUrl;
+
+            if (!finalImageUrl && previewUrl) {
+                console.log("No storage URL, converting to Base64...");
+                try {
+                    // Compress/Resize logic could go here, but for MVP simple Base64
+                    finalImageUrl = await blobToBase64(previewUrl);
+                } catch (e) {
+                    console.error("Base64 conversion failed", e);
+                    finalImageUrl = previewUrl; // Last resort (only works locally)
+                }
+            }
+
             // Prepare data
             const baseCatchData = {
                 ownerUid: user.uid,
-                imageUrl: uploadedUrl ?? previewUrl,
+                imageUrl: finalImageUrl,
                 locationText,
                 waterType,
                 comment,

@@ -60,10 +60,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const devLogin = () => devLoginInternal(true);
 
     useEffect(() => {
+        // Emergency Reset via URL
+        const params = new URLSearchParams(window.location.search);
+        if (params.get('reset')) {
+            localStorage.removeItem('dev_mode_user');
+            window.location.href = '/login';
+            return;
+        }
+
+        /* 
+        // DISABLED: Causing issues with sticky sessions
         if (typeof window !== 'undefined' && localStorage.getItem('dev_mode_user') === 'true') {
             devLoginInternal(false);
             return;
-        }
+        } 
+        */
 
         if (!auth) {
             setLoading(false);
