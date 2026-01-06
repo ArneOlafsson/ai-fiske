@@ -1,71 +1,83 @@
 import { NextResponse } from 'next/server';
+import { GoogleGenerativeAI } from '@google/generative-ai';
 import { AiResult } from '@/lib/types';
 
-// Mock response for testing
-const MOCK_PIKE: AiResult = {
-    fishNameSv: "Gädda",
-    fishNameLatin: "Esox lucius",
-    confidence: 0.98,
-    descriptionShort: "Gäddan är en rovfisk som kännetecknas av sin långsmala kropp och stora gap fyllt med vassa tänder. Den är vanlig i svenska sjöar och bräckt vatten.",
-    edible: "Ja",
-    edibleNotes: "Gäddan är en utmärkt matfisk men har många ben (Y-ben). Passar bra till färs eller ugnsbakad.",
-    recipeTitle: "Klassiska Gäddwallenbergare",
-    recipeIngredients: [
-        "500g gäddfärs",
-        "2 dl vispgrädde",
-        "3 äggulor",
-        "Salt och vitpeppar",
-        "Ströbröd",
-        "Smör till stekning"
-    ],
-    recipeSteps: [
-        "Blanda den kalla gäddfärsen med salt och peppar.",
-        "Rör ner äggulorna en i taget.",
-        "Tillsätt grädden lite i taget under omrörning (färsen måste vara kall).",
-        "Forma biffar, panera i ströbröd och stek i rikligt med smör ca 3-4 min per sida."
-    ],
-    cookingMethod: "Stekning"
-};
-
-const MOCK_PERCH: AiResult = {
-    fishNameSv: "Abborre",
-    fishNameLatin: "Perca fluviatilis",
-    confidence: 0.96,
-    descriptionShort: "Abborren är en av Sveriges vanligaste fiskar, känd för sina röda fenor och ränder på sidorna.",
-    edible: "Ja",
-    edibleNotes: "Abborren räknas som en delikatess. Fast och vitt kött som är lätt att filéa.",
-    recipeTitle: "Smörstekt Abborrfilé med Kantareller",
-    recipeIngredients: [
-        "600g abborrfilé",
-        "Smör",
-        "Salt och peppar",
-        "200g kantareller",
-        "Dill och citron"
-    ],
-    recipeSteps: [
-        "Salta och peppra filéerna.",
-        "Stek kantarellerna i smör tills vätskan kokat in.",
-        "Lägg i en klick smör till och stek abborrfiléerna ca 2 min på varje sida.",
-        "Servera med pressad potatis och citronskiva."
-    ],
-    cookingMethod: "Stekning"
-};
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
 
 export async function POST(request: Request) {
     try {
+        if (!process.env.GEMINI_API_KEY) {
+            console.error("Missing GEMINI_API_KEY");
+            return NextResponse.json({ error: "Server configuration error" }, { status: 500 });
+        }
+
         const body = await request.json();
         const { imageUrl } = body;
 
-        // Simulate network delay
-        await new Promise(resolve => setTimeout(resolve, 2000));
+        if (!imageUrl) {
+            return NextResponse.json({ error: "No image provided" }, { status: 400 });
+        }
 
-        // Randomly return Pike or Perch for demo variety
-        const isPike = Math.random() > 0.5;
-        const result = isPike ? MOCK_PIKE : MOCK_PERCH;
+        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
-        return NextResponse.json({ aiResult: result });
-    } catch (error) {
-        console.error("AI Error:", error);
-        return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+        // Prepare image part
+        let imagePart;
+        if (imageUrl.startsWith('data:image')) {
+            // Base64
+            const base64Data = imageUrl.split(',')[1];
+            const mimeType = imageUrl.split(':')[1].split(';')[0];
+            imagePart = {
+                inlineData: {
+                    data: base64Data,
+                    mimeType: mimeType
+                }
+            };
+        } else {
+            // URL - Fetch and convert to base64 buffer for Gemini
+            // Note: Gemini 1.5 Flash supports URL if file API used, otherwise inlineData best for simple stateless.
+            const imageResp = await fetch(imageUrl);
+            const arrayBuffer = await imageResp.arrayBuffer();
+            const base64Data = Buffer.from(arrayBuffer).toString('base64');
+            const mimeType = imageResp.headers.get('content-type') || 'image/jpeg';
+            imagePart = {
+                inlineData: {
+                    data: base64Data,
+                    mimeType: mimeType
+                }
+            };
+        }
+
+        const prompt = `
+        Analysera denna fiskbild för en svensk fiskeapp.
+        Returnera enbart valid JSON (ingen markdown) med följande struktur:
+        {
+            "fishNameSv": "Svenskt artnamn",
+            "fishNameLatin": "Latinskt namn",
+            "confidence": 0.0-1.0 (siffra),
+            "descriptionShort": "Kort beskrivning (max 2 meningar)",
+            "edible": "Ja" | "Nej" | "Beror på",
+            "edibleNotes": "Kort notering om matvärde",
+            "recipeTitle": "Titel på ett passande recept",
+            "recipeIngredients": ["ingrediens 1", "ingrediens 2"...],
+            "recipeSteps": ["steg 1", "steg 2"...],
+            "cookingMethod": "Stekning" | "Ugn" | "Grillning" | "Soppa"
+        }
+        Om det inte är en fisk, sätt "fishNameSv": "Okänd" och confidence lågt.
+        `;
+
+        const result = await model.generateContent([prompt, imagePart]);
+        const responseText = result.response.text();
+
+        // Clean markdown code blocks if present // ```json ... ```
+        const cleanJson = responseText.replace(/```json/g, '').replace(/```/g, '').trim();
+
+        const aiResult: AiResult = JSON.parse(cleanJson);
+
+        return NextResponse.json({ aiResult });
+    } catch (error: any) {
+        console.error("AI Error Detailed:", error);
+        console.error("Key present:", !!process.env.GEMINI_API_KEY);
+        console.error("Key length:", process.env.GEMINI_API_KEY?.length);
+        return NextResponse.json({ error: "Internal Server Error: " + error.message }, { status: 500 });
     }
 }

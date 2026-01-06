@@ -42,6 +42,12 @@ export default function CommentSection({ catchId, count = 0 }: CommentSectionPro
             return;
         }
 
+        if (catchId.startsWith('local-')) {
+            const localComments = JSON.parse(localStorage.getItem(`comments_${catchId}`) || '[]');
+            setComments(localComments);
+            return;
+        }
+
         const q = query(
             collection(db, 'catches', catchId, 'comments'),
             orderBy('createdAt', 'asc')
@@ -60,6 +66,33 @@ export default function CommentSection({ catchId, count = 0 }: CommentSectionPro
 
         setLoading(true);
         try {
+            if (catchId.startsWith('local-')) {
+                const newC: Comment = {
+                    id: 'local-comment-' + Date.now(),
+                    uid: user.uid,
+                    displayName: profile?.displayName || 'Du',
+                    photoURL: profile?.photoURL,
+                    text: newComment.trim(),
+                    createdAt: { seconds: Date.now() / 1000 } as any,
+                };
+                const existing = JSON.parse(localStorage.getItem(`comments_${catchId}`) || '[]');
+                const updated = [...existing, newC];
+                localStorage.setItem(`comments_${catchId}`, JSON.stringify(updated));
+                setComments(updated);
+
+                // Update Parent Count in LocalStorage
+                const localCatches = JSON.parse(localStorage.getItem('local_catches') || '[]');
+                const catchIndex = localCatches.findIndex((c: any) => c.id === catchId);
+                if (catchIndex >= 0) {
+                    localCatches[catchIndex].commentsCount = (localCatches[catchIndex].commentsCount || 0) + 1;
+                    localStorage.setItem('local_catches', JSON.stringify(localCatches));
+                }
+
+                setNewComment('');
+                setLoading(false);
+                return;
+            }
+
             if (user.uid.startsWith('dev-')) {
                 // Dev Mode Mock
                 setComments(prev => [...prev, {

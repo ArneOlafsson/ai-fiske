@@ -49,3 +49,7 @@ firebase-debug.log
 # Other
 .DS_Store
 *.pem
+
+# Debug artifacts
+debug-copy.txt
+*.log

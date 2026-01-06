@@ -77,11 +77,24 @@ export default function FishIdentifier() {
             }
 
             // 2. Call API
+            let apiImageUrl = downloadUrl;
+
+            // If URL is local blob (Storage upload failed), convert to Base64 for API
+            if (downloadUrl.startsWith('blob:')) {
+                console.log("Converting blob to base64 for API...");
+                try {
+                    apiImageUrl = await blobToBase64(downloadUrl);
+                } catch (b64Error) {
+                    console.error("Failed to convert blob for API", b64Error);
+                    throw new Error("Kunde inte bearbeta bilden.");
+                }
+            }
+
             const response = await fetch('/api/identify', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    imageUrl: downloadUrl,
+                    imageUrl: apiImageUrl,
                     locationText,
                     waterType
                 })
@@ -89,8 +102,8 @@ export default function FishIdentifier() {
 
             if (!response.ok) throw new Error("Identifiering misslyckades");
 
-
             const data = await response.json();
+            if (!data.aiResult) throw new Error("Fick inget svar från AI");
             setResult(data.aiResult);
 
             // 3. Update Quota
@@ -107,6 +120,9 @@ export default function FishIdentifier() {
             setLoading(false);
         }
     };
+
+
+
 
     // Force reset loading on mount to fix stuck state
     useEffect(() => {
@@ -180,6 +196,7 @@ export default function FishIdentifier() {
                 isPublic,
                 aiResult: result,
                 likesCount: 0,
+                commentsCount: 0,
             };
 
             // Attempt Save
@@ -303,14 +320,14 @@ export default function FishIdentifier() {
                     <Card className="p-6">
                         <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
                             <Utensils className="w-5 h-5 text-orange-500" />
-                            Rekommenderat Recept: {result.recipeTitle}
+                            Rekommenderat Recept: {result.recipeTitle || 'Inget recept hittades'}
                         </h3>
 
                         <div className="space-y-4">
                             <div>
                                 <h4 className="font-medium text-sm text-muted-foreground uppercase mb-2">Ingredienser</h4>
                                 <ul className="list-disc list-inside space-y-1">
-                                    {result.recipeIngredients.map((ing, i) => (
+                                    {(result.recipeIngredients || []).map((ing, i) => (
                                         <li key={i}>{ing}</li>
                                     ))}
                                 </ul>
@@ -319,7 +336,7 @@ export default function FishIdentifier() {
                             <div>
                                 <h4 className="font-medium text-sm text-muted-foreground uppercase mb-2">Gör så här</h4>
                                 <ol className="list-decimal list-inside space-y-2">
-                                    {result.recipeSteps.map((step, i) => (
+                                    {(result.recipeSteps || []).map((step, i) => (
                                         <li key={i} className="pl-1 marker:text-primary font-medium text-foreground/90">{step}</li>
                                     ))}
                                 </ol>
