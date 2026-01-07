@@ -18,7 +18,8 @@ export async function POST(request: Request) {
             return NextResponse.json({ error: "No image provided" }, { status: 400 });
         }
 
-        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+        // Updated to use gemini-2.5-flash as 1.5 is deprecated
+        const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 
         // Prepare image part
         let imagePart;

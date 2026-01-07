@@ -100,7 +100,10 @@ export default function FishIdentifier() {
                 })
             });
 
-            if (!response.ok) throw new Error("Identifiering misslyckades");
+            if (!response.ok) {
+                const errData = await response.json().catch(() => ({}));
+                throw new Error(errData.error || "Identifiering misslyckades");
+            }
 
             const data = await response.json();
             if (!data.aiResult) throw new Error("Fick inget svar från AI");
@@ -115,7 +118,7 @@ export default function FishIdentifier() {
 
         } catch (error) {
             console.error(error);
-            alert("Något gick fel vid identifieringen.");
+            alert(error instanceof Error ? error.message : "Något gick fel vid identifieringen.");
         } finally {
             setLoading(false);
         }
