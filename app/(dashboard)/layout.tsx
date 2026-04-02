@@ -8,11 +8,14 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     const { user, loading } = useAuth();
     const router = useRouter();
 
+    // Removed auth check to allow Guest Access
+    /*
     useEffect(() => {
         if (!loading && !user) {
             router.push('/login');
         }
     }, [user, loading, router]);
+    */
 
     if (loading) {
         return (
@@ -22,7 +25,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         );
     }
 
-    if (!user) return null;
+    // if (!user) return null; // Allow rendering for guests
 
     return (
         <div className="container mx-auto px-4 py-8 max-w-5xl">

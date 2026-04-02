@@ -75,7 +75,7 @@ export default function LoginPage() {
     };
 
     return (
-        <div className="min-h-screen flex items-center justify-center p-4 bg-background">
+        <div className="min-h-screen flex items-center justify-center p-4">
             <Card className="w-full max-w-md p-8 glass-card">
                 <div className="text-center mb-8">
                     <h1 className="text-3xl font-bold mb-2">Välkommen tillbaka</h1>

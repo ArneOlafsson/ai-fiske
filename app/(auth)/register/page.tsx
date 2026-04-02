@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { createUserWithEmailAndPassword, GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
+import { createUserWithEmailAndPassword, GoogleAuthProvider, signInWithPopup, updateProfile } from 'firebase/auth';
 import { auth, db } from '@/lib/firebase';
 import { doc, setDoc, getDoc, serverTimestamp } from 'firebase/firestore';
 import { Button, Input, Card } from '@/components/ui/primitives';
@@ -9,13 +9,14 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 
 export default function RegisterPage() {
+    const [name, setName] = useState('');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
     const router = useRouter();
 
-    const createUserProfile = async (user: any) => {
+    const createUserProfile = async (user: any, providedName?: string) => {
         try {
             const userRef = doc(db, 'users', user.uid);
 
@@ -26,7 +27,7 @@ export default function RegisterPage() {
                 setDoc(userRef, {
                     uid: user.uid,
                     email: user.email,
-                    displayName: user.displayName || email.split('@')[0],
+                    displayName: providedName || user.displayName || email.split('@')[0],
                     photoURL: user.photoURL,
                     createdAt: serverTimestamp(),
                     isPremium: false,
@@ -52,7 +53,12 @@ export default function RegisterPage() {
         try {
             const userCredential = await createUserWithEmailAndPassword(auth, email, password);
 
-            await createUserProfile(userCredential.user);
+            // Update Auth Profile
+            await updateProfile(userCredential.user, {
+                displayName: name
+            });
+
+            await createUserProfile(userCredential.user, name);
 
             router.push('/dashboard');
         } catch (err: any) {
@@ -95,7 +101,7 @@ export default function RegisterPage() {
     };
 
     return (
-        <div className="min-h-screen flex items-center justify-center p-4 bg-background">
+        <div className="min-h-screen flex items-center justify-center p-4">
             <Card className="w-full max-w-md p-8 glass-card">
                 <div className="text-center mb-8">
                     <h1 className="text-3xl font-bold mb-2">Skapa konto</h1>
@@ -109,6 +115,16 @@ export default function RegisterPage() {
                 )}
 
                 <form onSubmit={handleRegister} className="space-y-4">
+                    <div>
+                        <label className="text-sm font-medium mb-1 block">Namn</label>
+                        <Input
+                            type="text"
+                            placeholder="Ditt förnamn"
+                            value={name}
+                            onChange={(e) => setName(e.target.value)}
+                            required
+                        />
+                    </div>
                     <div>
                         <label className="text-sm font-medium mb-1 block">Email</label>
                         <Input

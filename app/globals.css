@@ -89,9 +89,10 @@
 body {
   /* Use the fish pattern with a light overlay */
   background-color: var(--background);
-  background-image: linear-gradient(rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.95)), url('/fish-bg.png') !important;
+  /* Updated overlay to be more transparent so the blue fish pattern is visible */
+  background-image: linear-gradient(rgba(255, 255, 255, 0.3), rgba(255, 255, 255, 0.5)), url('/bg-fish.png') !important;
   background-attachment: fixed;
-  background-size: 300px;
+  background-size: 400px;
   background-repeat: repeat;
 
   color: var(--foreground);

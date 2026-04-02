@@ -1,35 +1,59 @@
 import { NextResponse } from 'next/server';
+import { GoogleGenerativeAI } from "@google/generative-ai";
+
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "");
 
 export async function POST(request: Request) {
     try {
         const { message, history } = await request.json();
 
-        // Simulate thinking
-        await new Promise(resolve => setTimeout(resolve, 1000));
-
-        let answer = "Det är en intressant fråga om fiske! Som AI-fiskeassistent rekommenderar jag att anpassa betet efter vattentemperaturen.";
-
-        const lowerMsg = message.toLowerCase();
-
-        if (lowerMsg.includes("bete") || lowerMsg.includes("drag")) {
-            answer = "För gädda fungerar stora gummibeten eller jerkbaits bäst just nu. För abborre skulle jag prova en mindre jigg i naturliga färger (typ motoroil).";
-        } else if (lowerMsg.includes("väder") || lowerMsg.includes("vind")) {
-            answer = "Mulet väder med lite vind är ofta optimalt för gäddfiske (så kallat 'Gäddväder'). Högtryck och strålande sol kan göra fisken passiv, då får du fiska djupare.";
-        } else if (lowerMsg.includes("gös")) {
-            answer = "Gös fiskas bäst på kvällen eller natten, gärna med bottenmete eller vertikalfiske nära grynnor. De gillar ofta färger som chartreuse eller vitt.";
-        } else if (lowerMsg.includes("gädda") || lowerMsg.includes("gäddan")) {
-            answer = "Gäddan är en predator som ofta står i vasskanten eller vid natebälten. Testa att veva in betet oregelbundet med 'vevstopp' för att trigga hugg.";
-        } else if (lowerMsg.includes("abborre")) {
-            answer = "Abborren är en flockfisk. Hittar du en, finns det ofta fler! Prova dropshot eller spinnare runt bryggor och stenrösen.";
-        } else if (lowerMsg.includes("hej") || lowerMsg.includes("tja")) {
-            answer = "Hej! 👋 Jag är din AI-fiskeassistent. Fråga mig om beten, fiskeplatser eller vilken fisk som är på hugget!";
+        if (!process.env.GEMINI_API_KEY) {
+            console.error("GEMINI_API_KEY not set");
+            return NextResponse.json({ error: "Server Configuration Error" }, { status: 500 });
         }
+
+        const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+
+        const chat = model.startChat({
+            history: history.map((msg: any) => ({
+                role: msg.role === 'assistant' ? 'model' : 'user',
+                parts: [{ text: msg.text }],
+            })),
+            generationConfig: {
+                maxOutputTokens: 500,
+            },
+        });
+
+        const systemPrompt = "Du är en expertguide för sportfiske i Sverige. Svara kortfattat, kunnigt och uppmuntrande på svenska. Håll svaren under 100 ord om möjligt.";
+
+        // We prepend the system prompt context to the user message since startChat doesn't strictly support system instruction in all valid SDK versions/models easily without beta flags
+        // or we could use the systemInstruction arg if we are sure of the SDK version.
+        // For safety/compatibility, we can guide the model via the first message or verify SDK version.
+        // Checking package.json, we have "@google/generative-ai": "^0.24.1", which supports systemInstruction.
+
+        // Re-initializing model with system instruction for better behavior
+        const chatModel = genAI.getGenerativeModel({
+            model: "gemini-2.5-flash",
+            // Added instruction to avoid markdown formatting significantly
+            systemInstruction: "Du är en expertguide för sportfiske i Sverige. Svara kortfattat, kunnigt och uppmuntrande på svenska. Använd INTE markdown-formatering (som fetstil **txt** eller punktlistor *). Skriv endast ren text i stycken. Om frågan inte handlar om fiske, försök leda tillbaka ämnet eller avböj vänligt."
+        });
+
+        const chatSession = chatModel.startChat({
+            history: history.map((msg: any) => ({
+                role: msg.role === 'assistant' ? 'model' : 'user',
+                parts: [{ text: msg.text }],
+            })),
+        });
+
+        const result = await chatSession.sendMessage(message);
+        const responseText = result.response.text();
 
         return NextResponse.json({
             role: 'assistant',
-            text: answer
+            text: responseText
         });
     } catch (error) {
-        return NextResponse.json({ error: "Server Error" }, { status: 500 });
+        console.error("AI Chat Error:", error);
+        return NextResponse.json({ error: "Kunde inte svara just nu." }, { status: 500 });
     }
 }

@@ -100,13 +100,13 @@ export default function LandingPage() {
             <div className="absolute top-0 right-0 bg-primary text-primary-foreground px-4 py-1 text-sm font-bold rounded-bl-xl">
               POPULÄR
             </div>
-            <h2 className="text-3xl font-bold mb-4">Engångsbetalning</h2>
+            <h2 className="text-3xl font-bold mb-4">Helår 2026</h2>
             <div className="text-6xl font-bold text-primary mb-6">
-              99 kr <span className="text-xl text-muted-foreground font-normal">/ livstid</span>
+              299 kr <span className="text-xl text-muted-foreground font-normal">/ år</span>
             </div>
             <ul className="text-left max-w-md mx-auto space-y-4 mb-8 text-lg text-muted-foreground">
               <li className="flex items-center gap-3">
-                <span className="text-green-500">✓</span> 500 AI-identifieringar
+                <span className="text-green-500">✓</span> Obegränsade AI-identifieringar
               </li>
               <li className="flex items-center gap-3">
                 <span className="text-green-500">✓</span> Obegränsad tillgång till community
@@ -115,12 +115,12 @@ export default function LandingPage() {
                 <span className="text-green-500">✓</span> Exklusiva recept och platstips
               </li>
               <li className="flex items-center gap-3">
-                <span className="text-green-500">✓</span> Inga månadskostnader
+                <span className="text-green-500">✓</span> Gäller hela 2026
               </li>
             </ul>
             <Link href="/register">
               <Button size="lg" className="w-full md:w-auto min-w-[200px] text-lg">
-                Skaffa Premium Nu
+                Skaffa Årskort Nu
               </Button>
             </Link>
           </Card>

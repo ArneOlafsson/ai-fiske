@@ -37,5 +37,34 @@ service cloud.firestore {
         allow write: if request.auth != null && request.resource.data.uid == request.auth.uid;
         allow delete: if request.auth != null && resource.data.uid == request.auth.uid;
     }
+
+    // Tips & Trix Posts
+    match /posts/{postId} {
+        allow read: if true;
+        
+        // Allow create/write if Admin OR specific allowed emails
+        // Note: In real app, Custom Claims (admin=true) is better/safer than checking email in rules (email isn't always in auth.token unless customized).
+        // But for this project, checking the User Document 'role' field is safer than email string matching if we trust the User Doc.
+        // Let's check the User Doc role OR specific UIDs if we knew them.
+        // For simplicity now: Allow if User Document says Role: Admin.
+        
+        // Allow create/delete if Admin
+        allow create, delete: if request.auth != null && 
+          get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+        
+        // Allow update if Admin OR if only updating commentsCount (creating a comment)
+        allow update: if request.auth != null && (
+          get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' ||
+          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['commentsCount'])
+        );
+
+        // Comments subcollection
+        match /comments/{commentId} {
+             allow read: if true; 
+             // Allow create if Premium. Check User Document.
+             allow create: if request.auth != null && 
+               get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isPremium == true;
+        }
+    }
   }
 }

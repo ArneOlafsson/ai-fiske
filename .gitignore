@@ -53,3 +53,6 @@ firebase-debug.log
 # Debug artifacts
 debug-copy.txt
 *.log
+
+# Secrets
+service-account.json

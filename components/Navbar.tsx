@@ -25,6 +25,12 @@ export default function Navbar() {
                             <Link href="/dashboard">
                                 <Button variant="ghost" size="sm">Hem</Button>
                             </Link>
+                            <Link href="/tips">
+                                <Button variant="ghost" size="sm">Tips</Button>
+                            </Link>
+                            <Link href="/equipment">
+                                <Button variant="ghost" size="sm">Utrustning</Button>
+                            </Link>
                             <Link href="/profile">
                                 <Button variant="default" size="sm">Min Profil</Button>
                             </Link>

@@ -192,6 +192,7 @@ export default function FishIdentifier() {
             // Prepare data
             const baseCatchData = {
                 ownerUid: user.uid,
+                ownerName: profile?.displayName || user.displayName || 'Anonym',
                 imageUrl: finalImageUrl,
                 locationText,
                 waterType,

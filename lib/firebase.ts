@@ -3,6 +3,7 @@ import { getAuth } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
 import { getStorage } from "firebase/storage";
 import { getFunctions } from "firebase/functions";
+import { getAnalytics, isSupported } from "firebase/analytics";
 
 const firebaseConfig = {
     apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
@@ -11,14 +12,16 @@ const firebaseConfig = {
     storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
     messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
     appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
+    measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID
 };
 
 // Initialize Firebase
-let app;
+let app: any;
 let auth: any;
 let db: any;
 let storage: any;
 let functions: any;
+let analytics: any;
 
 try {
     app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
@@ -26,6 +29,14 @@ try {
     db = getFirestore(app);
     storage = getStorage(app);
     functions = getFunctions(app, "europe-west1");
+
+    if (typeof window !== 'undefined') {
+        isSupported().then((yes) => {
+            if (yes) {
+                analytics = getAnalytics(app);
+            }
+        });
+    }
 } catch (error) {
     console.warn("Firebase initialization failed (Likely missing keys). App running in limited mode.", error);
     app = null;
@@ -33,6 +44,7 @@ try {
     db = null;
     storage = null;
     functions = null;
+    analytics = null;
 }
 
-export { app, auth, db, storage, functions };
+export { app, auth, db, storage, functions, analytics };

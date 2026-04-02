@@ -12,21 +12,48 @@ import { adminAuth } from '@/lib/firebase-admin'; // Mock or Real?
 // Actually, `checkout.sessions.create` returns an externally hosted page.
 // We just need to know WHO is paying.
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || 'sk_test_mock', {
-    apiVersion: '2024-12-18.acacia' as any, // Use latest or what's installed
-});
+const initStripe = () => {
+    if (!process.env.STRIPE_SECRET_KEY) {
+        return null;
+    }
+    return new Stripe(process.env.STRIPE_SECRET_KEY, {
+        apiVersion: '2024-12-18.acacia' as any,
+    });
+};
 
 export async function POST(request: Request) {
     try {
-        // For MVP, we use the fallback/mock if no key provided
-        if (!process.env.STRIPE_SECRET_KEY) {
-            console.warn("No STRIPE_SECRET_KEY, returning mock success url");
-            // Simulate success immediately for demo apps
-            const url = new URL(request.url).origin + '/profile?payment=success_mock';
-            return NextResponse.json({ url });
+        // Determine base URL dynamically (for Vercel or Localhost)
+        const origin = new URL(request.url).origin;
+
+        // Enforce Real Payments
+        const stripe = initStripe();
+        if (!stripe) {
+            console.error("STRIPE_SECRET_KEY is missing via process.env");
+            return NextResponse.json({
+                error: "Stripe configuration missing. Please set STRIPE_SECRET_KEY in Firebase Functions secrets."
+            }, { status: 500 });
         }
 
-        const { uid, email } = await request.json(); // Body param
+        const { uid, email, promoCode } = await request.json(); // Body param
+
+        let discounts = undefined;
+
+        if (promoCode) {
+            const promotionCodes = await stripe.promotionCodes.list({
+                code: promoCode,
+                active: true,
+                limit: 1,
+            });
+
+            if (promotionCodes.data.length > 0) {
+                const couponId = promotionCodes.data[0].coupon.id;
+                discounts = [{ coupon: couponId }];
+            } else {
+                // Return 400 if code is invalid, so UI can show error
+                return NextResponse.json({ error: "Ogiltig rabattkod" }, { status: 400 });
+            }
+        }
 
         const session = await stripe.checkout.sessions.create({
             payment_method_types: ['card'],
@@ -35,8 +62,8 @@ export async function POST(request: Request) {
                     price_data: {
                         currency: 'sek',
                         product_data: {
-                            name: 'AI Fiskeassistent Lifetime',
-                            description: 'Livstids tillgång + Obegränsad AI',
+                            name: 'AI Fiskeassistent Premium 2026',
+                            description: 'Helårsprenumeration 2026 + Obegränsad AI',
                         },
                         unit_amount: 29900, // 299.00 SEK
                     },
@@ -44,8 +71,10 @@ export async function POST(request: Request) {
                 },
             ],
             mode: 'payment',
-            success_url: `${new URL(request.url).origin}/profile?payment=success`,
-            cancel_url: `${new URL(request.url).origin}/profile?payment=cancelled`,
+            allow_promotion_codes: !discounts, // Only allow Stripe UI promo code if we haven't already applied one
+            discounts: discounts,
+            success_url: `${origin}/profile?payment=success&session_id={CHECKOUT_SESSION_ID}`,
+            cancel_url: `${origin}/profile?payment=cancelled`,
             customer_email: email,
             metadata: {
                 uid: uid,

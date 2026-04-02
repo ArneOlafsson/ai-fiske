@@ -36,6 +36,7 @@ export interface AiResult {
 export interface Catch {
     id: string; // Document ID
     ownerUid: string;
+    ownerName?: string | null;
     imageUrl: string;
     createdAt: Timestamp;
     locationText: string;

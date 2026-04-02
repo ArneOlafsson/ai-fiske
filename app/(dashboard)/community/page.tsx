@@ -15,6 +15,7 @@ const MOCK_CATCHES: Catch[] = [
     {
         id: 'mock-1',
         ownerUid: 'mock-user-1',
+        ownerName: 'Erik Andersson',
         imageUrl: 'https://images.unsplash.com/photo-1544551763-46a8723ba3f9?auto=format&fit=crop&q=80&w=1000',
         locationText: 'Storsjön, Jämtland',
         waterType: 'sjö',
@@ -38,6 +39,7 @@ const MOCK_CATCHES: Catch[] = [
     {
         id: 'mock-2',
         ownerUid: 'mock-user-2',
+        ownerName: 'Anna Skog',
         imageUrl: 'https://images.unsplash.com/photo-1520188746-86d396d5e777?auto=format&fit=crop&q=80&w=1000',
         locationText: 'Stockholms Skärgård',
         waterType: 'hav',
@@ -61,6 +63,7 @@ const MOCK_CATCHES: Catch[] = [
     {
         id: 'mock-3',
         ownerUid: 'mock-user-3',
+        ownerName: 'Karl Karlsson',
         imageUrl: 'https://images.unsplash.com/photo-1498612753354-772a30629934?auto=format&fit=crop&q=80&w=1000',
         locationText: 'Mörrumsån',
         waterType: 'älv',
@@ -257,6 +260,9 @@ export default function CommunityPage() {
                         <div className="p-5">
                             <div className="flex justify-between items-start mb-4">
                                 <div>
+                                    <p className="font-bold text-primary mb-1">
+                                        {item.ownerName || 'Anonym fiskare'}
+                                    </p>
                                     <p className="text-sm text-muted-foreground flex items-center gap-1 mb-1">
                                         <MapPin className="w-3 h-3" /> {item.locationText}
                                     </p>
