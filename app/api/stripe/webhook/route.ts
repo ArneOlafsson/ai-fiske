@@ -3,10 +3,6 @@ import Stripe from 'stripe';
 import { adminDb } from '@/lib/firebase-admin';
 import { FieldValue } from 'firebase-admin/firestore';
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-    apiVersion: '2024-12-18.acacia' as any,
-});
-
 const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
 
 export async function POST(request: Request) {
@@ -21,6 +17,9 @@ export async function POST(request: Request) {
     let event: Stripe.Event;
 
     try {
+        const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || 'sk_test_dummy', {
+            apiVersion: '2024-12-18.acacia' as any,
+        });
         event = stripe.webhooks.constructEvent(body, signature, webhookSecret);
     } catch (err: any) {
         console.error(`Webhook signature verification failed: ${err.message}`);
