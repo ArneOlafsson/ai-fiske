@@ -7,7 +7,7 @@ const inter = Inter({ subsets: ["latin"] });
 import Navbar from "@/components/Navbar";
 
 export const metadata: Metadata = {
-  title: "AI Fiskeassistent - Din Smarta Fiskeguide",
+  title: "Bertlids - Din Smarta Fiskeguide",
   description: "Identifiera fiskarter med AI, hitta hemliga fiskevatten och få skräddarsydda recept. Din kompletta guide till bättre fiske.",
   manifest: "/manifest.json",
   icons: {
@@ -15,7 +15,7 @@ export const metadata: Metadata = {
     apple: "/icon-192.png",
   },
   openGraph: {
-    title: "AI Fiskeassistent - Identifiera Fisk & Hitta Vatten",
+    title: "Bertlids - Identifiera Fisk & Hitta Vatten",
     description: "Ladda upp en bild på din fångst och få svar direkt. Hitta nya smultronställen och bli en bättre fiskare med AI.",
     url: "https://ai-fiske-app-2026.web.app",
     type: "website",
