@@ -17,7 +17,7 @@ export default function Navbar() {
         <nav className="border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50">
             <div className="container flex h-14 max-w-screen-2xl items-center justify-between px-4">
                 <Link href="/" className="flex items-center space-x-2 font-bold text-xl text-primary tracking-tight">
-                    <span>🐟 AI Fiskeassistent</span>
+                    <span>🐟 Bertlids</span>
                 </Link>
                 <div className="flex items-center space-x-4">
                     {user ? (
