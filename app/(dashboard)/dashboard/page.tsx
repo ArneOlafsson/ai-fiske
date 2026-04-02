@@ -59,6 +59,13 @@ export default function Dashboard() {
                     gradient="from-yellow-500/20 to-amber-500/20"
                 />
                 <NavCard
+                    href="/equipment"
+                    title="Utrustning & Bete"
+                    desc="Rekommendationer och tips från Animal Deli."
+                    icon={<Anchor className="w-8 h-8 text-teal-500" />}
+                    gradient="from-teal-500/20 to-cyan-500/20"
+                />
+                <NavCard
                     href="/spots"
                     title="Hitta Fiskevatten"
                     desc="Var nappar det? Få tips baserat på art."
@@ -71,13 +78,6 @@ export default function Dashboard() {
                     desc="Ställ frågor om utrustning och metoder."
                     icon={<MessageCircle className="w-8 h-8 text-violet-500" />}
                     gradient="from-violet-500/20 to-purple-500/20"
-                />
-                <NavCard
-                    href="/equipment"
-                    title="Utrustning & Bete"
-                    desc="Rekommendationer och tips från Animal Deli."
-                    icon={<Anchor className="w-8 h-8 text-teal-500" />}
-                    gradient="from-teal-500/20 to-cyan-500/20"
                 />
 
                 <SponsorCard
