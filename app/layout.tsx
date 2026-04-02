@@ -11,8 +11,8 @@ export const metadata: Metadata = {
   description: "Identifiera fiskarter med AI, hitta hemliga fiskevatten och få skräddarsydda recept. Din kompletta guide till bättre fiske.",
   manifest: "/manifest.json",
   icons: {
-    icon: "/icon-192.png",
-    apple: "/icon-192.png",
+    icon: "/icon-192.png?v=2",
+    apple: "/icon-192.png?v=2",
   },
   openGraph: {
     title: "Bertlids - Identifiera Fisk & Hitta Vatten",
