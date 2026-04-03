@@ -61,7 +61,7 @@ export default function Dashboard() {
                 <NavCard
                     href="/equipment"
                     title="Utrustning & Bete"
-                    desc="Rekommendationer och tips från Animal Deli."
+                    desc="Rekommendationer och tips från Johan Bertlid."
                     icon={<Anchor className="w-8 h-8 text-teal-500" />}
                     gradient="from-teal-500/20 to-cyan-500/20"
                 />
@@ -82,7 +82,7 @@ export default function Dashboard() {
 
                 <SponsorCard
                     title="Animal Deli"
-                    desc="Naturligt hundgodis för din bästa fiskekompis. Perfekt i båten!"
+                    desc="Naturligt hundgodis för din bästa fiskekompis. Perfekt i båten! Kod BERTLID1 ger 50%."
                     image="/ads/animal-deli.png"
                     cta="Gå till butik"
                     href="https://animaldeli.com/"
