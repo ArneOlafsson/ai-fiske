@@ -6,7 +6,7 @@ import { Button, Card } from '@/components/ui/primitives';
 import { collection, query, orderBy, getDocs } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import Link from 'next/link';
-import { Plus, Clock, MessageSquare, ChevronRight } from 'lucide-react';
+import { Plus, Clock, MessageSquare, ChevronRight, Lightbulb } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { sv } from 'date-fns/locale';
 
@@ -51,7 +51,10 @@ export default function TipsPage() {
         <div className="space-y-6">
             <div className="flex justify-between items-center">
                 <div>
-                    <h1 className="text-3xl font-bold">Tips & Trix</h1>
+                    <h1 className="text-3xl font-bold flex items-center gap-3">
+                        <Lightbulb className="w-8 h-8 text-primary" />
+                        Tips & Trix
+                    </h1>
                     <p className="text-muted-foreground">Lär dig av proffsen</p>
                 </div>
                 {canCreate && (
