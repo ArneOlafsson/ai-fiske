@@ -25,7 +25,7 @@ export default function TipsPage() {
     const [posts, setPosts] = useState<Post[]>([]);
     const [loading, setLoading] = useState(true);
 
-    const canCreate = profile?.role === 'admin' || user?.email === 'johan@animaldeli.com' || user?.email === 'info@olafsson.se';
+    const canCreate = profile?.role === 'admin' || user?.email === 'johan@animaldeli.com' || user?.email === 'arne@olafsson.se';
 
     useEffect(() => {
         const fetchPosts = async () => {

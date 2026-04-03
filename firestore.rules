@@ -48,13 +48,17 @@ service cloud.firestore {
         // Let's check the User Doc role OR specific UIDs if we knew them.
         // For simplicity now: Allow if User Document says Role: Admin.
         
-        // Allow create/delete if Admin
-        allow create, delete: if request.auth != null && 
-          get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+        allow create, delete: if request.auth != null && (
+          get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' ||
+          request.auth.token.email == 'arne@olafsson.se' ||
+          request.auth.token.email == 'johan@animaldeli.com'
+        );
         
-        // Allow update if Admin OR if only updating commentsCount (creating a comment)
+        // Allow update if Admin/Authorized OR if only updating commentsCount (creating a comment)
         allow update: if request.auth != null && (
           get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' ||
+          request.auth.token.email == 'arne@olafsson.se' ||
+          request.auth.token.email == 'johan@animaldeli.com' ||
           request.resource.data.diff(resource.data).affectedKeys().hasOnly(['commentsCount'])
         );
 
@@ -62,6 +66,24 @@ service cloud.firestore {
         match /comments/{commentId} {
              allow read: if true; 
              // Allow create if Premium. Check User Document.
+             allow create: if request.auth != null && 
+               get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isPremium == true;
+        }
+    }
+    
+    // Equipment & Bete
+    match /equipment/{equipmentId} {
+        allow read: if true;
+        
+        allow create, delete, update: if request.auth != null && (
+          get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' ||
+          request.auth.token.email == 'arne@olafsson.se' ||
+          request.auth.token.email == 'johan@animaldeli.com'
+        );
+        
+        // Comments subcollection
+        match /comments/{commentId} {
+             allow read: if true; 
              allow create: if request.auth != null && 
                get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isPremium == true;
         }
