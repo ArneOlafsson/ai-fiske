@@ -3,7 +3,7 @@
 import { useAuth } from "@/components/AuthProvider";
 import { Button, Card } from "@/components/ui/primitives";
 import Link from "next/link";
-import { Camera, MapPin, MessageCircle, Users, Crown, Zap, Lightbulb, Anchor } from "lucide-react";
+import { Camera, MapPin, MessageCircle, Users, Crown, Zap, Lightbulb, Anchor, Sparkles, ArrowRight } from "lucide-react";
 
 export default function Dashboard() {
     const { profile, loading } = useAuth();
@@ -11,75 +11,103 @@ export default function Dashboard() {
     if (loading) return null;
 
     const isPremium = profile?.isPremium;
-    const quotaLeft = profile ? (profile.aiQuotaTotal - profile.aiQuotaUsed) : 0;
+    const userName = profile?.displayName || 'Test';
 
     return (
-        <div className="space-y-8">
-            <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                <div>
-                    <h1 className="text-3xl font-bold">Hej, {profile?.displayName || 'Fiskare'}! 👋</h1>
-                    <p className="text-muted-foreground">Vad vill du göra idag?</p>
-                </div>
-
-                {isPremium ? (
-                    <div className="bg-primary/10 text-primary px-4 py-2 rounded-full border border-primary/20 flex items-center gap-2">
-                        <Zap className="w-4 h-4" />
-                        <span className="font-medium">{quotaLeft} identifieringar kvar</span>
-                    </div>
-                ) : (
-                    <Link href="/profile">
-                        <Button variant="default" className="bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white border-0">
-                            <Crown className="w-4 h-4 mr-2" />
-                            Lås upp Premium (299 kr)
-                        </Button>
-                    </Link>
-                )}
+        <div className="space-y-8 animate-in fade-in duration-500 pb-10">
+            <header className="space-y-2">
+                <h2 className="text-primary font-bold text-xs tracking-widest uppercase">Välkommen tillbaka</h2>
+                <h1 className="text-4xl md:text-5xl font-serif text-white">Hej, {userName}.</h1>
+                <p className="text-muted-foreground text-lg">Vad vill du göra idag?</p>
             </header>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <NavCard
+            {!isPremium ? (
+                <Link href="/profile" className="block">
+                    <div className="bg-gradient-to-r from-[#3C8D71] to-[#5EC4A1] rounded-2xl p-5 flex flex-col sm:flex-row sm:items-center justify-between shadow-lg shadow-black/20 hover:scale-[1.02] transition-transform gap-4">
+                        <div className="flex items-center gap-3">
+                            <Sparkles className="w-6 h-6 text-[#0B1E2D]" />
+                            <div>
+                                <h3 className="text-[#0B1E2D] font-bold text-xs tracking-widest uppercase opacity-90">Uppgradera</h3>
+                                <p className="text-white font-bold text-xl">Lås upp Premium</p>
+                            </div>
+                        </div>
+                        <div className="bg-white/20 px-4 py-2 rounded-lg backdrop-blur-sm text-sm font-bold text-white w-fit">
+                            299 kr
+                        </div>
+                    </div>
+                </Link>
+            ) : (
+                <div className="bg-[#132738] rounded-2xl p-5 flex items-center justify-between border-l-4 border-primary shadow-lg shadow-black/20">
+                    <div className="flex items-center gap-3">
+                        <Sparkles className="w-6 h-6 text-primary" />
+                        <div>
+                            <h3 className="text-primary font-bold text-xs tracking-widest uppercase">Premium Aktivt</h3>
+                            <p className="text-white font-bold text-xl">Njut av full tillgång</p>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            <div className="space-y-4">
+                <h2 className="text-muted-foreground font-bold text-xs tracking-widest uppercase mb-4">Verktyg</h2>
+                
+                <FeatureCard 
                     href="/identify"
                     title="Identifiera Fångst"
-                    desc="Ta en bild och få svar direkt (Art, Recept)"
-                    icon={<Camera className="w-8 h-8 text-primary" />}
-                    gradient="from-blue-500/20 to-cyan-500/20"
+                    desc="Ta en bild — få art, recept och tips direkt."
+                    badge="AI-Identifiering"
+                    icon={<Camera className="w-5 h-5 text-white/70" />}
+                    accentColor="#5EC4A1" 
                 />
-                <NavCard
+
+                <FeatureCard 
                     href="/community"
                     title="Community"
                     desc="Se andras fångster och dela dina egna."
-                    icon={<Users className="w-8 h-8 text-orange-500" />}
-                    gradient="from-orange-500/20 to-red-500/20"
+                    badge="Dela & Utforska"
+                    icon={<Users className="w-5 h-5 text-white/70" />}
+                    accentColor="#E28743" 
                 />
-                <NavCard
+
+                <FeatureCard 
+                    href="/spots"
+                    title="Hitta Vatten"
+                    desc="Utforska hemliga smultronställen baserat på art."
+                    badge="GPS & Karta"
+                    icon={<MapPin className="w-5 h-5 text-white/70" />}
+                    accentColor="#3b82f6" 
+                />
+
+                <FeatureCard 
                     href="/tips"
                     title="Tips & Trix"
                     desc="Experttips från Johan Bertlid."
-                    icon={<Lightbulb className="w-8 h-8 text-yellow-500" />}
-                    gradient="from-yellow-500/20 to-amber-500/20"
+                    badge="Kunskapsbank"
+                    icon={<Lightbulb className="w-5 h-5 text-white/70" />}
+                    accentColor="#eab308" 
                 />
-                <NavCard
+
+                <FeatureCard 
                     href="/equipment"
                     title="Utrustning & Bete"
                     desc="Rekommendationer och tips från Johan Bertlid."
-                    icon={<Anchor className="w-8 h-8 text-teal-500" />}
-                    gradient="from-teal-500/20 to-cyan-500/20"
+                    badge="Utrustning"
+                    icon={<Anchor className="w-5 h-5 text-white/70" />}
+                    accentColor="#06b6d4" 
                 />
-                <NavCard
-                    href="/spots"
-                    title="Hitta Fiskevatten"
-                    desc="Var nappar det? Få tips baserat på art."
-                    icon={<MapPin className="w-8 h-8 text-green-500" />}
-                    gradient="from-green-500/20 to-emerald-500/20"
-                />
-                <NavCard
+
+                <FeatureCard 
                     href="/chat"
                     title="AI-Assistent"
                     desc="Ställ frågor om utrustning och metoder."
-                    icon={<MessageCircle className="w-8 h-8 text-violet-500" />}
-                    gradient="from-violet-500/20 to-purple-500/20"
+                    badge="Frågor & Svar"
+                    icon={<MessageCircle className="w-5 h-5 text-white/70" />}
+                    accentColor="#8b5cf6" 
                 />
-
+            </div>
+            
+             <div className="mt-8 pt-6 border-t border-[#1E3A54]">
+                <h2 className="text-muted-foreground font-bold text-xs tracking-widest uppercase mb-4">Erbjudanden</h2>
                 <SponsorCard
                     title="Animal Deli"
                     desc="Naturligt hundgodis för din bästa fiskekompis. Perfekt i båten! Kod BERTLID1 ger 50%."
@@ -87,47 +115,37 @@ export default function Dashboard() {
                     cta="Gå till butik"
                     href="https://animaldeli.com/"
                 />
-            </div>
-
-            {!isPremium && (
-                <Card className="p-6 border-amber-500/30 bg-amber-500/5">
-                    <div className="flex flex-col md:flex-row gap-6 items-center">
-                        <div className="flex-1">
-                            <h3 className="text-xl font-bold mb-2 flex items-center gap-2">
-                                <Crown className="w-5 h-5 text-amber-500" />
-                                Uppgradera till Premium 2026
-                            </h3>
-                            <p className="text-muted-foreground mb-4">
-                                Få obegränsad tillgång till AI-identifiering, personliga recept och exakta fiskeplatser. Hela 2026 för 299 kr.
-                            </p>
-                        </div>
-                        <Link href="/profile">
-                            <Button size="lg" className="w-full md:w-auto bg-amber-500 hover:bg-amber-600 text-white">
-                                Köp Årskort
-                            </Button>
-                        </Link>
-                    </div>
-                </Card>
-            )}
+             </div>
         </div>
     );
 }
 
-function NavCard({ href, title, desc, icon, gradient }: any) {
+function FeatureCard({ href, title, desc, icon, badge, accentColor }: any) {
     return (
         <Link href={href} className="block group">
-            <Card className={`h-full p-6 transition-all duration-300 hover:scale-[1.02] hover:shadow-lg border-border/50 bg-gradient-to-br ${gradient} backdrop-blur-sm`}>
-                <div className="flex items-start justify-between mb-4">
-                    <div className="p-3 bg-background/50 rounded-xl rounded-tl-sm shadow-sm group-hover:bg-background transition-colors">
+            <div 
+                className="bg-[#132738] rounded-2xl p-5 shadow-sm transition-all duration-300 hover:scale-[1.01] hover:bg-[#1a334a] flex items-center justify-between border-l-[6px]"
+                style={{ borderLeftColor: accentColor }}
+            >
+                <div className="flex gap-4 items-start w-full">
+                    <div className="bg-[#1E3A54] p-3 rounded-xl shrink-0 mt-1">
                         {icon}
                     </div>
-                    <div className="bg-background/20 rounded-full p-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <span className="text-xs font-semibold">Gå till ➔</span>
+                    <div className="flex-1">
+                        <div className="flex justify-between items-start mb-1">
+                            <h3 className="text-white font-bold text-lg">{title}</h3>
+                            <ArrowRight className="w-4 h-4 text-muted-foreground opacity-50 group-hover:opacity-100 group-hover:text-white transition-all transform group-hover:translate-x-1" />
+                        </div>
+                        <p className="text-muted-foreground text-sm leading-relaxed mb-3 pr-4">{desc}</p>
+                        <div 
+                            className="text-[10px] uppercase tracking-wider font-bold inline-block px-2 py-1 rounded bg-[#1E3A54]/50"
+                            style={{ color: accentColor }}
+                        >
+                            {badge}
+                        </div>
                     </div>
                 </div>
-                <h3 className="text-xl font-bold mb-2">{title}</h3>
-                <p className="text-muted-foreground">{desc}</p>
-            </Card>
+            </div>
         </Link>
     );
 }
@@ -135,18 +153,18 @@ function NavCard({ href, title, desc, icon, gradient }: any) {
 function SponsorCard({ title, desc, image, cta, href }: any) {
     return (
         <a href={href} target="_blank" rel="noopener noreferrer" className="block group">
-            <Card className="h-full p-6 transition-all duration-300 hover:scale-[1.02] hover:shadow-lg border-primary/20 bg-gradient-to-br from-primary/5 to-transparent backdrop-blur-sm relative overflow-hidden">
-                <div className="absolute top-2 right-2 px-2 py-0.5 bg-primary/10 rounded text-[10px] uppercase font-bold text-primary/60 tracking-wider">
+            <div className="bg-[#132738] rounded-2xl p-6 relative overflow-hidden transition-all duration-300 hover:scale-[1.01] hover:bg-[#1a334a] border border-[#1E3A54]">
+                <div className="absolute top-4 right-4 px-2 py-1 bg-[#1E3A54] rounded text-[10px] uppercase font-bold text-muted-foreground tracking-wider">
                     Sponsrat
                 </div>
 
                 <div className="flex flex-col h-full justify-between">
                     <div>
-                        <div className="mb-6 h-12 flex items-center">
+                        <div className="mb-6 h-10 flex items-center bg-white/10 rounded p-2 w-fit">
                             <img
                                 src={image}
                                 alt={title}
-                                className="h-10 object-contain opacity-90 group-hover:opacity-100 transition-opacity"
+                                className="h-full object-contain opacity-90 group-hover:opacity-100 transition-opacity filter brightness-0 invert"
                                 onError={(e: any) => {
                                     e.target.style.display = 'none';
                                     const fallback = document.createElement('div');
@@ -156,14 +174,14 @@ function SponsorCard({ title, desc, image, cta, href }: any) {
                                 }}
                             />
                         </div>
-                        <p className="text-muted-foreground text-sm mb-4 line-clamp-4">{desc}</p>
+                        <p className="text-muted-foreground text-sm mb-4 leading-relaxed">{desc}</p>
                     </div>
 
-                    <Button variant="outline" size="sm" className="w-full mt-2 group-hover:bg-primary group-hover:text-white transition-all">
+                    <Button variant="outline" size="sm" className="w-full mt-2 border-primary/50 text-white hover:bg-primary hover:border-primary hover:text-[#0B1E2D] bg-transparent transition-all">
                         {cta}
                     </Button>
                 </div>
-            </Card>
+            </div>
         </a>
     );
 }

@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import { Playfair_Display, DM_Sans } from "next/font/google";
 import "./globals.css";
 
-const inter = Inter({ subsets: ["latin"] });
+const playfair = Playfair_Display({ subsets: ["latin"], variable: "--font-playfair" });
+const dmSans = DM_Sans({ subsets: ["latin"], variable: "--font-dm" });
 
 import Navbar from "@/components/Navbar";
 
@@ -40,7 +41,7 @@ export default function RootLayout({
   return (
     <html lang="sv">
       <body
-        className={`${inter.className} antialiased min-h-screen flex flex-col`}
+        className={`${dmSans.className} ${playfair.variable} antialiased min-h-screen flex flex-col`}
       >
         <AuthProvider>
           <Navbar />

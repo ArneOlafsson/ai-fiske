@@ -48,59 +48,46 @@
   }
 }
 
-/* Bright & Light Theme (White & Orange) */
+/* Maritime Premium Theme */
 :root {
-  --background: #ffffff;
-  /* White */
-  --foreground: #0f172a;
-  /* Slate 900 */
-  --card: #ffffff;
-  /* White */
-  --card-foreground: #0f172a;
-  /* Slate 900 */
-  --popover: #ffffff;
-  --popover-foreground: #0f172a;
-  --primary: #f97316;
-  /* Orange 500 - Vibrant Orange */
-  --primary-foreground: #ffffff;
-  /* White */
-  --secondary: #f1f5f9;
-  /* Slate 100 */
-  --secondary-foreground: #0f172a;
-  --muted: #f1f5f9;
-  /* Slate 100 */
-  --muted-foreground: #64748b;
-  /* Slate 500 */
-  --accent: #fff7ed;
-  /* Orange 50 */
-  --accent-foreground: #ea580c;
-  /* Orange 600 */
+  --background: #0B1E2D;
+  --foreground: #F1F5F9;
+  --card: #132738;
+  --card-foreground: #F1F5F9;
+  --popover: #0B1E2D;
+  --popover-foreground: #F1F5F9;
+  --primary: #5EC4A1;
+  --primary-foreground: #0B1E2D;
+  --secondary: #1E3A54;
+  --secondary-foreground: #F1F5F9;
+  --muted: #1E3A54;
+  --muted-foreground: #94A3B8;
+  --accent: #E28743;
+  --accent-foreground: #FFFFFF;
   --destructive: #ef4444;
   --destructive-foreground: #ffffff;
-  --border: #e2e8f0;
-  /* Slate 200 */
-  --input: #e2e8f0;
-  /* Slate 200 */
-  --ring: #f97316;
-  /* Orange 500 */
+  --border: #1E3A54;
+  --input: #1E3A54;
+  --ring: #5EC4A1;
   --radius: 0.75rem;
 }
 
 body {
-  /* Use the fish pattern with a light overlay */
   background-color: var(--background);
-  /* Updated overlay to be more transparent so the blue fish pattern is visible */
-  background-image: linear-gradient(rgba(255, 255, 255, 0.3), rgba(255, 255, 255, 0.5)), url('/bg-fish.png') !important;
+  background-image: linear-gradient(rgba(11, 30, 45, 0.92), rgba(11, 30, 45, 0.97)), url('/bg-fish.png') !important;
   background-attachment: fixed;
   background-size: 400px;
   background-repeat: repeat;
 
   color: var(--foreground);
-  font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
 }
 
-/* Utility classes for Glassmorphism (Light/Frosty) */
+.font-serif {
+  font-family: var(--font-playfair), serif;
+}
+
+/* Utility classes for Glassmorphism (Dark) */
 .glass {
   background: rgba(255, 255, 255, 0.7);
   backdrop-filter: blur(10px);
