@@ -156,7 +156,7 @@ function SponsorCard({ title, desc, image, cta, href }: any) {
                                 }}
                             />
                         </div>
-                        <p className="text-muted-foreground text-sm mb-4 line-clamp-2">{desc}</p>
+                        <p className="text-muted-foreground text-sm mb-4 line-clamp-4">{desc}</p>
                     </div>
 
                     <Button variant="outline" size="sm" className="w-full mt-2 group-hover:bg-primary group-hover:text-white transition-all">
