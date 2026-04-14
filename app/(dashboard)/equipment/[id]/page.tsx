@@ -129,12 +129,13 @@ export default function EquipmentDetailPage({ params }: { params: Promise<{ id: 
     if (!equipment) return <div className="p-12 text-center text-muted-foreground">Inlägget hittades inte.</div>;
 
     const isAdmin = 
-        user?.email?.toLowerCase() === 'johan@animaldeli.com' || 
-        user?.email?.toLowerCase() === 'arne@olafsson.se' ||
-        profile?.email?.toLowerCase() === 'johan@animaldeli.com' ||
-        profile?.email?.toLowerCase() === 'arne@olafsson.se' ||
+        user?.email?.toLowerCase().trim() === 'johan@animaldeli.com' || 
+        user?.email?.toLowerCase().trim() === 'arne@olafsson.se' ||
+        profile?.email?.toLowerCase().trim() === 'johan@animaldeli.com' ||
+        profile?.email?.toLowerCase().trim() === 'arne@olafsson.se' ||
         profile?.role === 'admin';
     const isPremium = profile?.isPremium || isAdmin;
+    const canReply = isAdmin || equipment?.authorUid === user?.uid;
 
     return (
         <div className="max-w-3xl mx-auto space-y-8 animate-in fade-in duration-500">
@@ -246,10 +247,10 @@ export default function EquipmentDetailPage({ params }: { params: Promise<{ id: 
                                     </div>
                                 )}
 
-                                {isAdmin && (
-                                    <div className="mt-2 pt-2">
+                                {canReply && (
+                                    <div className="mt-3 pt-3 border-t border-border/10">
                                         {replyingTo === comment.id ? (
-                                            <div className="flex gap-2 items-center">
+                                            <div className="flex gap-2 items-center bg-background/50 p-2 rounded-md border border-teal-500/20">
                                                 <Input 
                                                     className="h-8 text-sm focus-visible:ring-teal-500" 
                                                     placeholder="Skriv ett svar..." 
@@ -261,8 +262,8 @@ export default function EquipmentDetailPage({ params }: { params: Promise<{ id: 
                                                 <Button size="sm" variant="ghost" className="h-8 px-2 hover:text-teal-600" onClick={() => { setReplyingTo(null); setReplyText(''); }}>Avbryt</Button>
                                             </div>
                                         ) : (
-                                            <Button variant="ghost" size="sm" className="h-6 px-2 text-xs text-muted-foreground hover:text-teal-600" onClick={() => setReplyingTo(comment.id)}>
-                                                Svara på kommentar
+                                            <Button variant="outline" size="sm" className="h-7 px-3 text-xs font-semibold bg-teal-500/10 text-teal-600 hover:bg-teal-500/20 border-teal-500/20" onClick={() => setReplyingTo(comment.id)}>
+                                                Svara
                                             </Button>
                                         )}
                                     </div>
