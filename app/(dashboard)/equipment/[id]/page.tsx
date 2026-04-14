@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/components/AuthProvider';
 import { Button, Input, Card } from '@/components/ui/primitives';
-import { doc, getDoc, collection, addDoc, query, orderBy, onSnapshot, serverTimestamp, updateDoc, increment } from 'firebase/firestore';
+import { doc, getDoc, collection, addDoc, query, orderBy, onSnapshot, serverTimestamp, updateDoc, increment, arrayUnion } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import Link from 'next/link';
 import { ArrowLeft, Send, Lock, User, Clock, Crown } from 'lucide-react';
@@ -11,12 +11,21 @@ import { formatDistanceToNow } from 'date-fns';
 import { sv } from 'date-fns/locale';
 import { use } from 'react';
 
+interface Reply {
+    id: string;
+    text: string;
+    authorName: string;
+    authorUid: string;
+    createdAt: string;
+}
+
 interface Comment {
     id: string;
     text: string;
     authorName: string;
     authorUid: string;
     createdAt: any;
+    replies?: Reply[];
 }
 
 export default function EquipmentDetailPage({ params }: { params: Promise<{ id: string }> }) {
@@ -29,6 +38,8 @@ export default function EquipmentDetailPage({ params }: { params: Promise<{ id: 
     const [comments, setComments] = useState<Comment[]>([]);
     const [newComment, setNewComment] = useState('');
     const [submitting, setSubmitting] = useState(false);
+    const [replyingTo, setReplyingTo] = useState<string | null>(null);
+    const [replyText, setReplyText] = useState('');
 
     useEffect(() => {
         const fetchEquipment = async () => {
@@ -92,10 +103,38 @@ export default function EquipmentDetailPage({ params }: { params: Promise<{ id: 
         }
     };
 
+    const handlePostReply = async (commentId: string) => {
+        if (!replyText.trim() || !user) return;
+        
+        try {
+            const commentRef = doc(db, 'equipment', id, 'comments', commentId);
+            await updateDoc(commentRef, {
+                replies: arrayUnion({
+                    id: Date.now().toString(),
+                    text: replyText,
+                    authorName: profile?.displayName || 'Admin',
+                    authorUid: user.uid,
+                    createdAt: new Date().toISOString()
+                })
+            });
+            setReplyingTo(null);
+            setReplyText('');
+        } catch (error) {
+            console.error("Error posting reply:", error);
+            alert("Kunde inte skicka svar.");
+        }
+    };
+
     if (loading) return <div className="p-12 text-center"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div></div>;
     if (!equipment) return <div className="p-12 text-center text-muted-foreground">Inlägget hittades inte.</div>;
 
-    const isPremium = profile?.isPremium;
+    const isAdmin = 
+        user?.email?.toLowerCase() === 'johan@animaldeli.com' || 
+        user?.email?.toLowerCase() === 'arne@olafsson.se' ||
+        profile?.email?.toLowerCase() === 'johan@animaldeli.com' ||
+        profile?.email?.toLowerCase() === 'arne@olafsson.se' ||
+        profile?.role === 'admin';
+    const isPremium = profile?.isPremium || isAdmin;
 
     return (
         <div className="max-w-3xl mx-auto space-y-8 animate-in fade-in duration-500">
@@ -189,6 +228,45 @@ export default function EquipmentDetailPage({ params }: { params: Promise<{ id: 
                                     </span>
                                 </div>
                                 <p className="text-sm text-foreground/80">{comment.text}</p>
+                                
+                                {comment.replies && comment.replies.length > 0 && (
+                                    <div className="mt-3 space-y-2">
+                                        {comment.replies.map(reply => (
+                                            <div key={reply.id} className="p-3 bg-secondary/10 rounded-lg border-l-2 border-teal-500/50 relative">
+                                                <div className="flex items-center gap-1.5 mb-1">
+                                                    <Crown className="w-3 h-3 text-teal-600" />
+                                                    <span className="font-semibold text-xs text-teal-600">{reply.authorName}</span>
+                                                    <span className="text-[10px] text-muted-foreground ml-auto">
+                                                        {formatDistanceToNow(new Date(reply.createdAt), { addSuffix: true, locale: sv })}
+                                                    </span>
+                                                </div>
+                                                <p className="text-sm text-foreground/90">{reply.text}</p>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+
+                                {isAdmin && (
+                                    <div className="mt-2 pt-2">
+                                        {replyingTo === comment.id ? (
+                                            <div className="flex gap-2 items-center">
+                                                <Input 
+                                                    className="h-8 text-sm focus-visible:ring-teal-500" 
+                                                    placeholder="Skriv ett svar..." 
+                                                    value={replyText} 
+                                                    onChange={e => setReplyText(e.target.value)}
+                                                    autoFocus
+                                                />
+                                                <Button size="sm" className="h-8 px-3 bg-teal-600 hover:bg-teal-700" onClick={() => handlePostReply(comment.id)}>Svara</Button>
+                                                <Button size="sm" variant="ghost" className="h-8 px-2 hover:text-teal-600" onClick={() => { setReplyingTo(null); setReplyText(''); }}>Avbryt</Button>
+                                            </div>
+                                        ) : (
+                                            <Button variant="ghost" size="sm" className="h-6 px-2 text-xs text-muted-foreground hover:text-teal-600" onClick={() => setReplyingTo(comment.id)}>
+                                                Svara på kommentar
+                                            </Button>
+                                        )}
+                                    </div>
+                                )}
                             </div>
                         </div>
                     ))}
