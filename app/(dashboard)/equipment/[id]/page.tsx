@@ -257,27 +257,26 @@ export default function EquipmentDetailPage({ params }: { params: Promise<{ id: 
                                     </div>
                                 )}
 
-                                {canReply && (
-                                    <div className="mt-3 pt-3 border-t border-border/10">
-                                        {replyingTo === comment.id ? (
-                                            <div className="flex gap-2 items-center bg-background/50 p-2 rounded-md border border-teal-500/20">
-                                                <Input 
-                                                    className="h-8 text-sm focus-visible:ring-teal-500" 
-                                                    placeholder="Skriv ett svar..." 
-                                                    value={replyText} 
-                                                    onChange={e => setReplyText(e.target.value)}
-                                                    autoFocus
-                                                />
-                                                <Button size="sm" className="h-8 px-3 bg-teal-600 hover:bg-teal-700" onClick={() => handlePostReply(comment.id)}>Svara</Button>
-                                                <Button size="sm" variant="ghost" className="h-8 px-2 hover:text-teal-600" onClick={() => { setReplyingTo(null); setReplyText(''); }}>Avbryt</Button>
-                                            </div>
-                                        ) : (
-                                            <Button variant="outline" size="sm" className="h-7 px-3 text-xs font-semibold bg-teal-500/10 text-teal-600 hover:bg-teal-500/20 border-teal-500/20" onClick={() => setReplyingTo(comment.id)}>
-                                                Svara
-                                            </Button>
-                                        )}
-                                    </div>
-                                )}
+                                {/* Reply functionality accessible to all premium users */}
+                                <div className="mt-3 pt-3 border-t border-border/10">
+                                    {replyingTo === comment.id ? (
+                                        <div className="flex gap-2 items-center bg-background/50 p-2 rounded-md border border-teal-500/20">
+                                            <Input 
+                                                className="h-8 text-sm focus-visible:ring-teal-500" 
+                                                placeholder="Skriv ett svar..." 
+                                                value={replyText} 
+                                                onChange={e => setReplyText(e.target.value)}
+                                                autoFocus
+                                            />
+                                            <Button size="sm" className="h-8 px-3 bg-teal-600 hover:bg-teal-700" onClick={() => handlePostReply(comment.id)}>Svara</Button>
+                                            <Button size="sm" variant="ghost" className="h-8 px-2 hover:text-teal-600" onClick={() => { setReplyingTo(null); setReplyText(''); }}>Avbryt</Button>
+                                        </div>
+                                    ) : (
+                                        <Button variant="outline" size="sm" className="h-7 px-3 text-xs font-semibold bg-teal-500/10 text-teal-600 hover:bg-teal-500/20 border-teal-500/20" onClick={() => setReplyingTo(comment.id)}>
+                                            Svara
+                                        </Button>
+                                    )}
+                                </div>
                             </div>
                         </div>
                     ))}
