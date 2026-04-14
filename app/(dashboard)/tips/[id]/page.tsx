@@ -182,6 +182,16 @@ export default function PostDetailPage({ params }: { params: Promise<{ id: strin
                     <span className="text-sm font-normal text-muted-foreground bg-secondary/30 px-2 py-1 rounded-full">{comments.length}</span>
                 </h3>
 
+                {!canReply && (
+                    <div className="bg-red-500/10 border border-red-500/20 text-red-500 rounded-md p-3 text-xs mb-4">
+                        <strong>Felsökning (syns bara tillfälligt):</strong> Din inloggning matchar inte admin-rättigheterna. <br/>
+                        Auth Mail: {user?.email || 'N/A'}<br/>
+                        Profil Mail: {profile?.email || 'N/A'}<br/>
+                        Roll: {profile?.role || 'N/A'}<br/>
+                        Om du nyligen pratat med supporten, vänligen <strong>stäng hela appen och öppna igen</strong> (eller logga ut och in) för att garantera att du inte kikar på en cachad gammal version.
+                    </div>
+                )}
+
                 {/* Comment Form */}
                 {isPremium ? (
                     <Card className="p-4 bg-secondary/5 border-primary/20">
