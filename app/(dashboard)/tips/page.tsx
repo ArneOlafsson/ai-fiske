@@ -81,7 +81,7 @@ export default function TipsPage() {
                     {posts.map(post => (
                         <Link href={`/tips/${post.id}`} key={post.id} className="group">
                             <Card className="h-full overflow-hidden hover:shadow-lg transition-all duration-300 border-border/50 group-hover:-translate-y-1">
-                                <div className="aspect-video relative overflow-hidden bg-secondary/10">
+                                <div className="aspect-square relative overflow-hidden bg-secondary/10">
                                     {post.imageUrl ? (
                                         <img
                                             src={post.imageUrl}

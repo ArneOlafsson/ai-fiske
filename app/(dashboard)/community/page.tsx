@@ -5,7 +5,7 @@ import { collection, query, where, orderBy, limit, onSnapshot, doc, updateDoc, i
 import { db } from '@/lib/firebase';
 import { Catch } from '@/lib/types';
 import { Card, Button } from '@/components/ui/primitives';
-import { Heart, MapPin, Calendar, MessageSquare } from 'lucide-react';
+import { Heart, MapPin, Calendar, MessageSquare, Trash2 } from 'lucide-react';
 import CommentSection from '@/components/features/CommentSection';
 import { useAuth } from '@/components/AuthProvider';
 import { format } from 'date-fns';
@@ -89,8 +89,15 @@ const MOCK_CATCHES: Catch[] = [
 export default function CommunityPage() {
     const [catches, setCatches] = useState<Catch[]>([]);
     const [loading, setLoading] = useState(true);
-    const { user } = useAuth();
+    const { user, profile } = useAuth();
     const [likedMap, setLikedMap] = useState<Record<string, boolean>>({});
+
+    const isAdmin = 
+        user?.email?.toLowerCase().trim() === 'johan@animaldeli.com' || 
+        user?.email?.toLowerCase().trim() === 'arne@olafsson.se' ||
+        profile?.email?.toLowerCase().trim() === 'johan@animaldeli.com' ||
+        profile?.email?.toLowerCase().trim() === 'arne@olafsson.se' ||
+        profile?.role === 'admin';
 
     useEffect(() => {
         // Query public catches
@@ -232,6 +239,15 @@ export default function CommunityPage() {
         }
     };
 
+    const handleDeleteCatch = async (catchId: string) => {
+        if (!confirm("Radera fångst permanent?")) return;
+        try {
+            await deleteDoc(doc(db, 'catches', catchId));
+        } catch (err) {
+            console.error("Kunde inte radera", err);
+        }
+    };
+
     return (
         <div className="max-w-2xl mx-auto space-y-8">
             <div className="text-center md:text-left">
@@ -245,7 +261,7 @@ export default function CommunityPage() {
 
                 {catches.map((item) => (
                     <Card key={item.id} className="overflow-hidden bg-card/50 backdrop-blur-sm border-primary/10">
-                        <div className="aspect-video relative bg-black/50">
+                        <div className="aspect-square relative bg-black/50">
                             {/* Use standard img for demo since image domains not configured for Next.js Image */}
                             <img
                                 src={item.imageUrl}
@@ -255,6 +271,13 @@ export default function CommunityPage() {
                             <div className="absolute top-4 right-4 bg-black/60 text-white px-3 py-1 rounded-full text-sm font-bold backdrop-blur-md">
                                 {item.aiResult?.fishNameSv || "Okänd"}
                             </div>
+                            {isAdmin && (
+                                <div className="absolute top-4 left-4">
+                                    <Button size="icon" variant="destructive" className="h-8 w-8 opacity-80 hover:opacity-100 backdrop-blur-md bg-red-600/80" onClick={() => handleDeleteCatch(item.id)}>
+                                        <Trash2 className="w-4 h-4 text-white" />
+                                    </Button>
+                                </div>
+                            )}
                         </div>
 
                         <div className="p-5">

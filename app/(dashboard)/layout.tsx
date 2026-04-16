@@ -47,12 +47,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                     </div>
                     <span className="text-[10px] font-medium tracking-wider mt-1">Karta</span>
                 </Link>
-                <Link href="/log" className="flex flex-col items-center text-muted-foreground hover:text-primary group transition-colors">
-                    <div className="w-10 h-10 flex items-center justify-center rounded-full group-hover:bg-primary/10">
-                        <List className="w-5 h-5" />
-                    </div>
-                    <span className="text-[10px] font-medium tracking-wider mt-1">Logg</span>
-                </Link>
+
                 <Link href="/profile" className="flex flex-col items-center text-muted-foreground hover:text-primary group transition-colors">
                     <div className="w-10 h-10 flex items-center justify-center rounded-full group-hover:bg-primary/10">
                         <User className="w-5 h-5" />

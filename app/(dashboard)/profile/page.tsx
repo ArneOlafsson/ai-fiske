@@ -298,7 +298,7 @@ function ProfileContent() {
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     {myCatches.map(item => (
                         <Card key={item.id} className="overflow-hidden group">
-                            <div className="aspect-video relative bg-black/50">
+                            <div className="aspect-square relative bg-black/50">
                                 <img src={item.imageUrl} className="w-full h-full object-cover" alt="Catch" />
                                 <div className="absolute top-2 right-2 flex gap-2">
                                     <Button

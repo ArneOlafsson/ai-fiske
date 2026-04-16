@@ -3,10 +3,11 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/components/AuthProvider';
 import { Button, Input, Card } from '@/components/ui/primitives';
-import { doc, getDoc, collection, addDoc, query, orderBy, onSnapshot, serverTimestamp, updateDoc, increment, arrayUnion } from 'firebase/firestore';
+import { doc, getDoc, collection, addDoc, query, orderBy, onSnapshot, serverTimestamp, updateDoc, increment, arrayUnion, deleteDoc, arrayRemove } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import Link from 'next/link';
-import { ArrowLeft, Send, Lock, User, Clock, Crown } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { ArrowLeft, Send, Lock, User, Clock, Crown, Trash2 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { sv } from 'date-fns/locale';
 import { use } from 'react';
@@ -31,6 +32,7 @@ interface Comment {
 export default function PostDetailPage({ params }: { params: Promise<{ id: string }> }) {
     // Next.js 15: params is a promise
     const { id } = use(params);
+    const router = useRouter();
 
     const { user, profile } = useAuth();
     const [post, setPost] = useState<any>(null);
@@ -125,6 +127,39 @@ export default function PostDetailPage({ params }: { params: Promise<{ id: strin
         }
     };
 
+    const handleDeletePost = async () => {
+        if (!confirm("Är du säker på att du vill radera detta inlägg?")) return;
+        try {
+            await deleteDoc(doc(db, 'posts', id));
+            router.push('/tips');
+        } catch (err) {
+            console.error("Fel vid borttagning av inlägg", err);
+            alert("Kunde inte radera inlägg.");
+        }
+    };
+
+    const handleDeleteComment = async (commentId: string) => {
+        if (!confirm("Radera kommentar?")) return;
+        try {
+            await deleteDoc(doc(db, 'posts', id, 'comments', commentId));
+            await updateDoc(doc(db, 'posts', id), { commentsCount: increment(-1) });
+        } catch (err) {
+            console.error("Fel vid borttagning av kommentar", err);
+        }
+    };
+
+    const handleDeleteReply = async (commentId: string, reply: Reply) => {
+        if (!confirm("Radera svar?")) return;
+        try {
+            const commentRef = doc(db, 'posts', id, 'comments', commentId);
+            await updateDoc(commentRef, {
+                replies: arrayRemove(reply)
+            });
+        } catch (err) {
+            console.error("Fel vid borttagning av svar", err);
+        }
+    };
+
     if (loading) return <div className="p-12 text-center"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div></div>;
     if (!post) return <div className="p-12 text-center text-muted-foreground">Inlägget hittades inte.</div>;
 
@@ -148,22 +183,29 @@ export default function PostDetailPage({ params }: { params: Promise<{ id: strin
             {/* Main Post */}
             <article className="space-y-6">
                 <header className="space-y-4">
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                        <span className="bg-primary/10 text-primary px-3 py-1 rounded-full font-medium">
-                            {post.authorName}
-                        </span>
-                        <span>•</span>
-                        <span className="flex items-center gap-1">
-                            <Clock className="w-4 h-4" />
-                            {post.createdAt?.seconds ? formatDistanceToNow(post.createdAt.toDate(), { addSuffix: true, locale: sv }) : ''}
-                        </span>
+                    <div className="flex justify-between items-start">
+                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                            <span className="bg-primary/10 text-primary px-3 py-1 rounded-full font-medium">
+                                {post.authorName}
+                            </span>
+                            <span>•</span>
+                            <span className="flex items-center gap-1">
+                                <Clock className="w-4 h-4" />
+                                {post.createdAt?.seconds ? formatDistanceToNow(post.createdAt.toDate(), { addSuffix: true, locale: sv }) : ''}
+                            </span>
+                        </div>
+                        {isAdmin && (
+                            <Button variant="ghost" size="sm" className="text-destructive hover:bg-destructive/10" onClick={handleDeletePost}>
+                                <Trash2 className="w-4 h-4 mr-2" /> Radera
+                            </Button>
+                        )}
                     </div>
 
                     <h1 className="text-3xl md:text-5xl font-bold leading-tight">{post.title}</h1>
                 </header>
 
                 {post.imageUrl && (
-                    <div className="aspect-video relative rounded-2xl overflow-hidden shadow-lg border border-border/50">
+                    <div className="aspect-square relative rounded-2xl overflow-hidden shadow-lg border border-border/50">
                         <img src={post.imageUrl} alt={post.title} className="w-full h-full object-cover" />
                     </div>
                 )}
@@ -234,9 +276,16 @@ export default function PostDetailPage({ params }: { params: Promise<{ id: strin
                             <div className="space-y-1 flex-1">
                                 <div className="flex justify-between items-start">
                                     <span className="font-semibold text-sm">{comment.authorName}</span>
-                                    <span className="text-xs text-muted-foreground">
-                                        {comment.createdAt?.seconds ? formatDistanceToNow(comment.createdAt.toDate(), { addSuffix: true, locale: sv }) : ''}
-                                    </span>
+                                    <div className="flex items-center gap-2">
+                                        <span className="text-xs text-muted-foreground">
+                                            {comment.createdAt?.seconds ? formatDistanceToNow(comment.createdAt.toDate(), { addSuffix: true, locale: sv }) : ''}
+                                        </span>
+                                        {isAdmin && (
+                                            <button onClick={() => handleDeleteComment(comment.id)} className="text-destructive hover:opacity-80 transition-opacity p-1">
+                                                <Trash2 className="w-4 h-4" />
+                                            </button>
+                                        )}
+                                    </div>
                                 </div>
                                 <p className="text-sm text-foreground/80">{comment.text}</p>
                                 
@@ -250,6 +299,11 @@ export default function PostDetailPage({ params }: { params: Promise<{ id: strin
                                                     <span className="text-[10px] text-muted-foreground ml-auto">
                                                         {formatDistanceToNow(new Date(reply.createdAt), { addSuffix: true, locale: sv })}
                                                     </span>
+                                                    {isAdmin && (
+                                                        <button onClick={() => handleDeleteReply(comment.id, reply)} className="text-destructive hover:opacity-80 ml-2">
+                                                            <Trash2 className="w-3 h-3" />
+                                                        </button>
+                                                    )}
                                                 </div>
                                                 <p className="text-sm text-foreground/90">{reply.text}</p>
                                             </div>

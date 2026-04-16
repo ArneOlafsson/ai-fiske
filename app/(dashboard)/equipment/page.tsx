@@ -81,7 +81,7 @@ export default function EquipmentPage() {
                     {equipment.map(item => (
                         <Link href={`/equipment/${item.id}`} key={item.id} className="group">
                             <Card className="h-full overflow-hidden hover:shadow-lg transition-all duration-300 border-border/50 group-hover:-translate-y-1">
-                                <div className="aspect-video relative overflow-hidden bg-secondary/10">
+                                <div className="aspect-square relative overflow-hidden bg-secondary/10">
                                     {item.imageUrl ? (
                                         <img
                                             src={item.imageUrl}

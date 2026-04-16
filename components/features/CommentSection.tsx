@@ -172,7 +172,7 @@ export default function CommentSection({ catchId, count = 0 }: CommentSectionPro
                                         <span className="text-xs text-muted-foreground">
                                             {comment.createdAt?.seconds ? formatDistanceToNow(new Date(comment.createdAt.seconds * 1000), { addSuffix: true, locale: sv }) : 'nyss'}
                                         </span>
-                                        {(user?.uid === comment.uid || profile?.role === 'admin') && (
+                                        {(user?.uid === comment.uid || profile?.role === 'admin' || user?.email?.toLowerCase().trim() === 'johan@animaldeli.com' || user?.email?.toLowerCase().trim() === 'arne@olafsson.se') && (
                                             <button onClick={() => handleDelete(comment.id)} className="text-destructive opacity-0 group-hover:opacity-100 transition-opacity">
                                                 <Trash2 className="w-3 h-3" />
                                             </button>
