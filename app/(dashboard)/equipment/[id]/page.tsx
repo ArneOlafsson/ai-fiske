@@ -4,7 +4,8 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '@/components/AuthProvider';
 import { Button, Input, Card } from '@/components/ui/primitives';
 import { doc, getDoc, collection, addDoc, query, orderBy, onSnapshot, serverTimestamp, updateDoc, increment, arrayUnion, deleteDoc, arrayRemove } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { ref, deleteObject } from 'firebase/storage';
+import { db, storage } from '@/lib/firebase';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft, Send, Lock, User, Clock, Crown, Trash2 } from 'lucide-react';
@@ -130,6 +131,14 @@ export default function EquipmentDetailPage({ params }: { params: Promise<{ id: 
     const handleDeletePost = async () => {
         if (!confirm("Är du säker på att du vill radera detta inlägg?")) return;
         try {
+            if (equipment.imageUrl && equipment.imageUrl.includes('firebasestorage.googleapis.com')) {
+                try {
+                    const imgRef = ref(storage, equipment.imageUrl);
+                    await deleteObject(imgRef);
+                } catch (imgError) {
+                    console.warn('Kunde inte radera bilden från storage. Den kanske redan är borttagen.', imgError);
+                }
+            }
             await deleteDoc(doc(db, 'equipment', id));
             router.push('/equipment');
         } catch (err) {
