@@ -52,30 +52,12 @@ export default function Dashboard() {
                 <h2 className="text-muted-foreground font-bold text-xs tracking-widest uppercase mb-4">Verktyg</h2>
                 
                 <FeatureCard 
-                    href="/identify"
-                    title="Identifiera Fångst"
-                    desc="Ta en bild — få art, recept och tips direkt."
-                    badge="AI-Identifiering"
-                    icon={<Camera className="w-5 h-5 text-white/70" />}
-                    accentColor="#5EC4A1" 
-                />
-
-                <FeatureCard 
                     href="/community"
                     title="Community & Fångst"
                     desc="Se andras fångster och dela dina egna."
                     badge="Dela & Utforska"
                     icon={<Users className="w-5 h-5 text-white/70" />}
                     accentColor="#E28743" 
-                />
-
-                <FeatureCard 
-                    href="/spots"
-                    title="Hitta Vatten"
-                    desc="Utforska hemliga smultronställen baserat på art."
-                    badge="GPS & Karta"
-                    icon={<MapPin className="w-5 h-5 text-white/70" />}
-                    accentColor="#3b82f6" 
                 />
 
                 <FeatureCard 
@@ -89,11 +71,29 @@ export default function Dashboard() {
 
                 <FeatureCard 
                     href="/equipment"
-                    title="Utrustning & Bete"
+                    title="Bertlids utrustning"
                     desc="Rekommendationer och tips från Johan Bertlid."
                     badge="Utrustning"
                     icon={<Anchor className="w-5 h-5 text-white/70" />}
                     accentColor="#06b6d4" 
+                />
+
+                <FeatureCard 
+                    href="/identify"
+                    title="Identifiera Fångst"
+                    desc="Ta en bild — få art, recept och tips direkt."
+                    badge="AI-Identifiering"
+                    icon={<Camera className="w-5 h-5 text-white/70" />}
+                    accentColor="#5EC4A1" 
+                />
+
+                <FeatureCard 
+                    href="/spots"
+                    title="Hitta Vatten"
+                    desc="Utforska hemliga smultronställen baserat på art."
+                    badge="GPS & Karta"
+                    icon={<MapPin className="w-5 h-5 text-white/70" />}
+                    accentColor="#3b82f6" 
                 />
 
                 <FeatureCard 
