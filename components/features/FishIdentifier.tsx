@@ -75,8 +75,20 @@ export default function FishIdentifier() {
 
             if (storage && user.uid) {
                 try {
-                    const storageRef = ref(storage, `catches/${user.uid}/${Date.now()}_${imageFile?.name || 'capture.jpg'}`);
-                    const uploadRes = await uploadBytes(storageRef, imageFile as Blob);
+                    // Convert to compressed JPEG (fixes HEIC bugs on iOS and reduces size)
+                    let uploadBlob: Blob = imageFile as Blob;
+                    try {
+                        if (previewUrl) {
+                            const b64 = await blobToBase64(previewUrl);
+                            const res = await fetch(b64);
+                            uploadBlob = await res.blob();
+                        }
+                    } catch (resizeErr) {
+                        console.warn("Kunde inte komprimera bilden, använder original", resizeErr);
+                    }
+
+                    const storageRef = ref(storage, `catches/${user.uid}/${Date.now()}_capture.jpg`);
+                    const uploadRes = await uploadBytes(storageRef, uploadBlob);
                     downloadUrl = await getDownloadURL(uploadRes.ref);
                     setUploadedUrl(downloadUrl);
                     console.log("Image uploaded to Storage:", downloadUrl);
