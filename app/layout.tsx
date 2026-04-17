@@ -16,7 +16,7 @@ export const metadata: Metadata = {
     apple: "/icon-192.png?v=2",
   },
   openGraph: {
-    title: "Bertlids - Identifiera Fisk & Hitta Vatten",
+    title: "Bertlids Tips, Trix och Utrustning",
     description: "Ladda upp en bild på din fångst och få svar direkt. Hitta nya smultronställen och bli en bättre fiskare med AI.",
     url: "https://ai-fiske-app-2026.web.app",
     type: "website",
