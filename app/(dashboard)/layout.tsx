@@ -32,9 +32,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     // if (!user) return null; // Allow rendering for guests
 
     const isPremium = profile?.isPremium;
+    const userEmail = (user?.email || profile?.email || '').toLowerCase().trim();
     const isAdmin = profile?.role === 'admin' || 
-                    profile?.email?.toLowerCase() === 'johan@animaldeli.com' || 
-                    profile?.email?.toLowerCase() === 'arne@olafsson.se';
+                    userEmail === 'johan@animaldeli.com' || 
+                    userEmail === 'arne@olafsson.se';
     
     // Paths that are strictly allowed for free users
     const allowedFreePaths = ['/dashboard', '/profile'];

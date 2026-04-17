@@ -6,7 +6,7 @@ import { Camera, Upload, Loader2, CheckCircle, AlertCircle, Utensils, MapPin } f
 import Image from 'next/image';
 import { useAuth } from '@/components/AuthProvider';
 import { AiResult } from '@/lib/types';
-import { collection, addDoc, serverTimestamp, doc, updateDoc, increment } from 'firebase/firestore';
+import { collection, addDoc, serverTimestamp, doc, updateDoc, increment, setDoc } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { db, storage } from '@/lib/firebase';
 import { useRouter } from 'next/navigation';
@@ -39,16 +39,21 @@ export default function FishIdentifier() {
     };
 
     const handleIdentify = async () => {
+        const userEmail = (user?.email || profile?.email || '').toLowerCase().trim();
         const isAdmin = profile?.role === 'admin' || 
-                        profile?.email?.toLowerCase() === 'johan@animaldeli.com' || 
-                        profile?.email?.toLowerCase() === 'arne@olafsson.se';
+                        userEmail === 'johan@animaldeli.com' || 
+                        userEmail === 'arne@olafsson.se';
 
         if (!profile?.isPremium && !isAdmin) {
             alert("Du måste vara Premium-medlem för att använda AI-identifiering.");
             router.push('/profile');
             return;
         }
-        if (!isAdmin && profile.aiQuotaUsed >= profile.aiQuotaTotal) {
+
+        const quotaUsed = profile?.aiQuotaUsed || 0;
+        const quotaTotal = profile?.aiQuotaTotal || 3;
+        
+        if (!isAdmin && quotaUsed >= quotaTotal) {
             alert("Din AI-kvot är slut. Kontakta support för påfyllning.");
             return;
         }
@@ -116,9 +121,9 @@ export default function FishIdentifier() {
             // 3. Update Quota
             // Ideally handled by backend, but doing client-side update for MVP/MVP Rules
             const userRef = doc(db, 'users', user.uid);
-            await updateDoc(userRef, {
+            await setDoc(userRef, {
                 aiQuotaUsed: increment(1)
-            });
+            }, { merge: true });
 
         } catch (error) {
             console.error(error);
