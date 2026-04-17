@@ -5,8 +5,7 @@ service cloud.firestore {
     
     // User Profiles
     match /users/{userId} {
-      allow read: if request.auth != null; // Authenticated users can read profiles (e.g. for comments/social later) or restrict to owner.
-      // Let's restrict to owner for now for safety.
+      allow read: if request.auth != null; 
       allow read, write: if request.auth != null && request.auth.uid == userId;
     }
 
@@ -17,9 +16,9 @@ service cloud.firestore {
       allow update: if request.auth != null; // Simplified for MVP (Likes/Comments updates)
       allow delete: if request.auth != null && (
         resource.data.ownerUid == request.auth.uid ||
-        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' ||
-        request.auth.token.email == 'arne@olafsson.se' ||
-        request.auth.token.email == 'johan@animaldeli.com'
+        (request.auth.token.email != null && request.auth.token.email == 'arne@olafsson.se') ||
+        (request.auth.token.email != null && request.auth.token.email == 'johan@animaldeli.com') ||
+        (exists(/databases/$(database)/documents/users/$(request.auth.uid)) && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin')
       );
       
       // Comments Subcollection
@@ -28,9 +27,9 @@ service cloud.firestore {
         allow create: if request.auth != null && request.resource.data.uid == request.auth.uid;
         allow delete: if request.auth != null && (
           resource.data.uid == request.auth.uid || 
-          get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' ||
-          request.auth.token.email == 'arne@olafsson.se' ||
-          request.auth.token.email == 'johan@animaldeli.com'
+          (request.auth.token.email != null && request.auth.token.email == 'arne@olafsson.se') ||
+          (request.auth.token.email != null && request.auth.token.email == 'johan@animaldeli.com') ||
+          (exists(/databases/$(database)/documents/users/$(request.auth.uid)) && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin')
         );
       }
     }
@@ -52,37 +51,30 @@ service cloud.firestore {
     match /posts/{postId} {
         allow read: if true;
         
-        // Allow create/write if Admin OR specific allowed emails
-        // Note: In real app, Custom Claims (admin=true) is better/safer than checking email in rules (email isn't always in auth.token unless customized).
-        // But for this project, checking the User Document 'role' field is safer than email string matching if we trust the User Doc.
-        // Let's check the User Doc role OR specific UIDs if we knew them.
-        // For simplicity now: Allow if User Document says Role: Admin.
-        
         allow create, delete: if request.auth != null && (
-          get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' ||
-          request.auth.token.email == 'arne@olafsson.se' ||
-          request.auth.token.email == 'johan@animaldeli.com'
+          (request.auth.token.email != null && request.auth.token.email == 'arne@olafsson.se') ||
+          (request.auth.token.email != null && request.auth.token.email == 'johan@animaldeli.com') ||
+          (exists(/databases/$(database)/documents/users/$(request.auth.uid)) && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin')
         );
         
-        // Allow update if Admin/Authorized OR if only updating commentsCount (creating a comment)
         allow update: if request.auth != null && (
-          get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' ||
-          request.auth.token.email == 'arne@olafsson.se' ||
-          request.auth.token.email == 'johan@animaldeli.com' ||
-          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['commentsCount'])
+          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['commentsCount']) ||
+          (request.auth.token.email != null && request.auth.token.email == 'arne@olafsson.se') ||
+          (request.auth.token.email != null && request.auth.token.email == 'johan@animaldeli.com') ||
+          (exists(/databases/$(database)/documents/users/$(request.auth.uid)) && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin')
         );
 
         // Comments subcollection
         match /comments/{commentId} {
              allow read: if true; 
-             // Allow create/update if Premium. Check User Document.
              allow create, update: if request.auth != null && 
+               exists(/databases/$(database)/documents/users/$(request.auth.uid)) && 
                get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isPremium == true;
              allow delete: if request.auth != null && (
                resource.data.uid == request.auth.uid || 
-               get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' ||
-               request.auth.token.email == 'arne@olafsson.se' ||
-               request.auth.token.email == 'johan@animaldeli.com'
+               (request.auth.token.email != null && request.auth.token.email == 'arne@olafsson.se') ||
+               (request.auth.token.email != null && request.auth.token.email == 'johan@animaldeli.com') ||
+               (exists(/databases/$(database)/documents/users/$(request.auth.uid)) && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin')
              );
         }
     }
@@ -92,30 +84,29 @@ service cloud.firestore {
         allow read: if true;
         
         allow create, delete: if request.auth != null && (
-          get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' ||
-          request.auth.token.email == 'arne@olafsson.se' ||
-          request.auth.token.email == 'johan@animaldeli.com'
+          (request.auth.token.email != null && request.auth.token.email == 'arne@olafsson.se') ||
+          (request.auth.token.email != null && request.auth.token.email == 'johan@animaldeli.com') ||
+          (exists(/databases/$(database)/documents/users/$(request.auth.uid)) && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin')
         );
         
-        // Allow update if Admin/Authorized OR if only updating commentsCount (creating a comment)
         allow update: if request.auth != null && (
-          get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' ||
-          request.auth.token.email == 'arne@olafsson.se' ||
-          request.auth.token.email == 'johan@animaldeli.com' ||
-          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['commentsCount'])
+          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['commentsCount']) ||
+          (request.auth.token.email != null && request.auth.token.email == 'arne@olafsson.se') ||
+          (request.auth.token.email != null && request.auth.token.email == 'johan@animaldeli.com') ||
+          (exists(/databases/$(database)/documents/users/$(request.auth.uid)) && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin')
         );
         
         // Comments subcollection
         match /comments/{commentId} {
              allow read: if true; 
-             // Allow create/update if Premium. Check User Document.
              allow create, update: if request.auth != null && 
+               exists(/databases/$(database)/documents/users/$(request.auth.uid)) && 
                get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isPremium == true;
              allow delete: if request.auth != null && (
                resource.data.uid == request.auth.uid || 
-               get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' ||
-               request.auth.token.email == 'arne@olafsson.se' ||
-               request.auth.token.email == 'johan@animaldeli.com'
+               (request.auth.token.email != null && request.auth.token.email == 'arne@olafsson.se') ||
+               (request.auth.token.email != null && request.auth.token.email == 'johan@animaldeli.com') ||
+               (exists(/databases/$(database)/documents/users/$(request.auth.uid)) && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin')
              );
         }
     }
