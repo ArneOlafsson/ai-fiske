@@ -289,7 +289,7 @@ export default function FishIdentifier() {
                                     <p className="text-muted-foreground">Klicka för att ta foto eller välja bild</p>
                                 </div>
                             )}
-                            <input type="file" accept="image/jpeg, image/png, image/webp" capture="environment" className="hidden" onChange={handleFileSelect} />
+                            <input type="file" accept="image/jpeg, image/png, image/webp" className="hidden" onChange={handleFileSelect} />
                         </label>
                     </div>
 
