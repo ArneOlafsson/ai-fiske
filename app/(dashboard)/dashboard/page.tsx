@@ -62,7 +62,7 @@ export default function Dashboard() {
 
                 <FeatureCard 
                     href="/community"
-                    title="Community"
+                    title="Community & Fångst"
                     desc="Se andras fångster och dela dina egna."
                     badge="Dela & Utforska"
                     icon={<Users className="w-5 h-5 text-white/70" />}

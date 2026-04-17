@@ -7,7 +7,9 @@ import { signOut } from 'firebase/auth';
 import { auth, db } from '@/lib/firebase';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState, useRef } from 'react';
-import { collection, query, where, orderBy, onSnapshot, deleteDoc, doc, updateDoc, setDoc, serverTimestamp } from 'firebase/firestore';
+import { collection, query, where, onSnapshot, deleteDoc, doc, updateDoc, setDoc, serverTimestamp } from 'firebase/firestore';
+import { ref, deleteObject } from 'firebase/storage';
+import { storage } from '@/lib/firebase';
 import { Catch } from '@/lib/types';
 
 import { useSearchParams } from 'next/navigation';
@@ -128,9 +130,13 @@ function ProfileContent() {
         await updateDoc(doc(db, 'catches', catchId), { isPublic: !currentStatus });
     };
 
-    const deleteCatch = async (catchId: string) => {
+    const deleteCatch = async (catchId: string, imageUrl: string) => {
         if (confirm("Vill du verkligen ta bort denna fångst?")) {
             await deleteDoc(doc(db, 'catches', catchId));
+            if (imageUrl && imageUrl.includes('firebasestorage')) {
+                const imageRef = ref(storage, imageUrl);
+                await deleteObject(imageRef).catch(e => console.warn("Kunde inte radera bild från storage:", e));
+            }
         }
     };
 
@@ -309,7 +315,7 @@ function ProfileContent() {
                                     </Button>
                                     <Button
                                         size="sm" variant="secondary" className="h-8 w-8 p-0 opacity-0 group-hover:opacity-100 transition-opacity text-destructive hover:bg-destructive/20"
-                                        onClick={() => deleteCatch(item.id)}
+                                        onClick={() => deleteCatch(item.id, item.imageUrl)}
                                     >
                                         <Trash2 className="w-4 h-4" />
                                     </Button>

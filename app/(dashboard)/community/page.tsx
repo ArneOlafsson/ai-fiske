@@ -1,8 +1,9 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { collection, query, where, orderBy, limit, onSnapshot, doc, updateDoc, increment, setDoc, deleteDoc, getDoc } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { collection, query, where, limit, onSnapshot, doc, updateDoc, increment, setDoc, deleteDoc } from 'firebase/firestore';
+import { db, storage } from '@/lib/firebase';
+import { ref, deleteObject } from 'firebase/storage';
 import { Catch } from '@/lib/types';
 import { Card, Button } from '@/components/ui/primitives';
 import { Heart, MapPin, Calendar, MessageSquare, Trash2 } from 'lucide-react';
@@ -239,10 +240,14 @@ export default function CommunityPage() {
         }
     };
 
-    const handleDeleteCatch = async (catchId: string) => {
+    const handleDeleteCatch = async (catchId: string, imageUrl: string) => {
         if (!confirm("Radera fångst permanent?")) return;
         try {
             await deleteDoc(doc(db, 'catches', catchId));
+            if (imageUrl && imageUrl.includes('firebasestorage')) {
+                const imageRef = ref(storage, imageUrl);
+                await deleteObject(imageRef).catch(e => console.warn("Kunde inte radera bild från storage:", e));
+            }
         } catch (err) {
             console.error("Kunde inte radera", err);
         }
@@ -251,7 +256,7 @@ export default function CommunityPage() {
     return (
         <div className="max-w-2xl mx-auto space-y-8">
             <div className="text-center md:text-left">
-                <h1 className="text-3xl font-bold">Community</h1>
+                <h1 className="text-3xl font-bold">Community & Fångst</h1>
                 <p className="text-muted-foreground">Se vad andra fiskare har fått upp nyligen.</p>
             </div>
 
@@ -273,7 +278,7 @@ export default function CommunityPage() {
                             </div>
                             {isAdmin && (
                                 <div className="absolute top-4 left-4">
-                                    <Button size="icon" variant="destructive" className="h-8 w-8 opacity-80 hover:opacity-100 backdrop-blur-md bg-red-600/80" onClick={() => handleDeleteCatch(item.id)}>
+                                    <Button size="icon" variant="destructive" className="h-8 w-8 opacity-80 hover:opacity-100 backdrop-blur-md bg-red-600/80" onClick={() => handleDeleteCatch(item.id, item.imageUrl)}>
                                         <Trash2 className="w-4 h-4 text-white" />
                                     </Button>
                                 </div>
