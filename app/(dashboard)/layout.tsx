@@ -31,8 +31,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
     // if (!user) return null; // Allow rendering for guests
 
-    const isPremium = profile?.isPremium;
     const userEmail = (user?.email || profile?.email || '').toLowerCase().trim();
+    const isPremium = profile?.isPremium || userEmail === 'arvid.bertlid@icloud.com';
     const isAdmin = profile?.role === 'admin' || 
                     userEmail === 'johan@animaldeli.com' || 
                     userEmail === 'arne@olafsson.se';

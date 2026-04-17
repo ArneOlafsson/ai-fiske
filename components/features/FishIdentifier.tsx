@@ -43,15 +43,16 @@ export default function FishIdentifier() {
         const isAdmin = profile?.role === 'admin' || 
                         userEmail === 'johan@animaldeli.com' || 
                         userEmail === 'arne@olafsson.se';
+        const isManualPremium = userEmail === 'arvid.bertlid@icloud.com';
 
-        if (!profile?.isPremium && !isAdmin) {
+        if (!profile?.isPremium && !isAdmin && !isManualPremium) {
             alert("Du måste vara Premium-medlem för att använda AI-identifiering.");
             router.push('/profile');
             return;
         }
 
         const quotaUsed = profile?.aiQuotaUsed || 0;
-        const quotaTotal = profile?.aiQuotaTotal || 3;
+        const quotaTotal = profile?.aiQuotaTotal || (isManualPremium ? 1000 : 3);
         
         if (!isAdmin && quotaUsed >= quotaTotal) {
             alert("Din AI-kvot är slut. Kontakta support för påfyllning.");
