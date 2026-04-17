@@ -39,7 +39,11 @@ export default function FishIdentifier() {
     };
 
     const handleIdentify = async () => {
-        if (!profile?.isPremium) {
+        const isAdmin = profile?.role === 'admin' || 
+                        profile?.email?.toLowerCase() === 'johan@animaldeli.com' || 
+                        profile?.email?.toLowerCase() === 'arne@olafsson.se';
+
+        if (!profile?.isPremium && !isAdmin) {
             alert("Du måste vara Premium-medlem för att använda AI-identifiering.");
             router.push('/profile');
             return;
