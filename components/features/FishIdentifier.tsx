@@ -48,7 +48,7 @@ export default function FishIdentifier() {
             router.push('/profile');
             return;
         }
-        if (profile.aiQuotaUsed >= profile.aiQuotaTotal) {
+        if (!isAdmin && profile.aiQuotaUsed >= profile.aiQuotaTotal) {
             alert("Din AI-kvot är slut. Kontakta support för påfyllning.");
             return;
         }
