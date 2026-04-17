@@ -215,8 +215,8 @@ export default function FishIdentifier() {
 
             // Attempt Save
             try {
-                // Ultra-short timeout for cloud save during debugging
-                const timeout = new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout")), 1000));
+                // Generous timeout for cloud save (15 seconds)
+                const timeout = new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout")), 15000));
 
                 await Promise.race([
                     addDoc(collection(db, 'catches'), {
