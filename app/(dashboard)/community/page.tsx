@@ -11,6 +11,7 @@ import CommentSection from '@/components/features/CommentSection';
 import { useAuth } from '@/components/AuthProvider';
 import { format } from 'date-fns';
 import { sv } from 'date-fns/locale';
+import Link from 'next/link';
 
 const MOCK_CATCHES: Catch[] = [
     {
@@ -255,9 +256,16 @@ export default function CommunityPage() {
 
     return (
         <div className="max-w-2xl mx-auto space-y-8">
-            <div className="text-center md:text-left">
-                <h1 className="text-3xl font-bold">Community & Fångst</h1>
-                <p className="text-muted-foreground">Se vad andra fiskare har fått upp nyligen.</p>
+            <div className="flex flex-col md:flex-row items-center justify-between gap-4 text-center md:text-left">
+                <div>
+                    <h1 className="text-3xl font-bold">Community & Fångst</h1>
+                    <p className="text-muted-foreground">Se vad andra fiskare har fått upp nyligen.</p>
+                </div>
+                <Link href="/community/create">
+                    <Button className="w-full md:w-auto">
+                        + Skapa Inlägg
+                    </Button>
+                </Link>
             </div>
 
             <div className="space-y-6">
