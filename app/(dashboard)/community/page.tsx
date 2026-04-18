@@ -282,25 +282,33 @@ export default function CommunityPage() {
                 {loading && <p>Laddar fångster...</p>}
                 {!loading && catches.length === 0 && <p>Inga publika fångster än.</p>}
 
-                {catches.map((item) => (
-                    <Card key={item.id} className="overflow-hidden bg-card/50 backdrop-blur-sm border-primary/10">
-                        <div className="aspect-square relative bg-black/50">
-                            {item.mediaType === 'video' ? (
-                                <video
-                                    src={item.imageUrl}
-                                    controls
-                                    playsInline
-                                    preload="metadata"
-                                    className="w-full h-full object-cover"
-                                />
-                            ) : (
-                                <img
-                                    src={item.imageUrl}
-                                    alt={item.aiResult?.fishNameSv || "Fångst"}
-                                    className="w-full h-full object-cover"
-                                />
-                            )}
-                            <div className="absolute top-4 right-4 bg-black/60 text-white px-3 py-1 rounded-full text-sm font-bold backdrop-blur-md">
+                    {catches.map((item) => {
+                        const isVideoItem = item.mediaType === 'video' || 
+                            (item.imageUrl && (
+                                item.imageUrl.toLowerCase().includes('.mp4') || 
+                                item.imageUrl.toLowerCase().includes('.mov') || 
+                                item.imageUrl.toLowerCase().includes('.webm')
+                            ));
+                            
+                        return (
+                        <Card key={item.id} className="overflow-hidden bg-card/50 backdrop-blur-sm border-primary/10">
+                            <div className="aspect-square relative bg-black/50">
+                                {isVideoItem ? (
+                                    <video
+                                        src={item.imageUrl}
+                                        controls
+                                        playsInline
+                                        preload="metadata"
+                                        className="w-full h-full object-cover"
+                                    />
+                                ) : (
+                                    <img
+                                        src={item.imageUrl}
+                                        alt={item.aiResult?.fishNameSv || "Fångst"}
+                                        className="w-full h-full object-cover"
+                                    />
+                                )}
+                                <div className="absolute top-4 right-4 bg-black/60 text-white px-3 py-1 rounded-full text-sm font-bold backdrop-blur-md">
                                 {item.aiResult?.fishNameSv || "Okänd"}
                             </div>
                             {isAdmin && (
@@ -362,7 +370,8 @@ export default function CommunityPage() {
                             </div>
                         </div>
                     </Card>
-                ))}
+                    );
+                })}
             </div>
         </div>
     );
