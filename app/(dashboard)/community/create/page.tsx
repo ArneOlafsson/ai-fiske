@@ -52,14 +52,12 @@ export default function CreateCommunityPostPage() {
         });
     };
 
-    const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>, explicitType: 'image' | 'video') => {
         if (e.target.files && e.target.files[0]) {
             const file = e.target.files[0];
             setImageFile(file);
             setPreviewUrl(URL.createObjectURL(file));
-            
-            const isVideo = file.type.startsWith('video/') || (file.name && /\.(mp4|mov|webm|mkv|avchd)$/i.test(file.name));
-            setMediaType(isVideo ? 'video' : 'image');
+            setMediaType(explicitType);
         }
     };
 
@@ -164,12 +162,12 @@ export default function CreateCommunityPostPage() {
                                 <label className="flex flex-col items-center justify-center p-6 border-2 border-dashed border-border rounded-xl cursor-pointer hover:border-primary/50 bg-secondary/5 transition-colors">
                                     <Camera className="w-8 h-8 mb-2 text-teal-600" />
                                     <span className="text-sm font-medium">Ladda upp Bild</span>
-                                    <input type="file" accept="image/*" className="hidden" onChange={handleFileSelect} />
+                                    <input type="file" accept="image/*" className="hidden" onChange={(e) => handleFileSelect(e, 'image')} />
                                 </label>
                                 <label className="flex flex-col items-center justify-center p-6 border-2 border-dashed border-border rounded-xl cursor-pointer hover:border-primary/50 bg-secondary/5 transition-colors">
                                     <Video className="w-8 h-8 mb-2 text-teal-600" />
                                     <span className="text-sm font-medium">Ladda upp Film</span>
-                                    <input type="file" accept="video/*" className="hidden" onChange={handleFileSelect} />
+                                    <input type="file" accept="video/*" className="hidden" onChange={(e) => handleFileSelect(e, 'video')} />
                                 </label>
                             </div>
                         ) : (
