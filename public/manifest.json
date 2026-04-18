@@ -1,6 +1,6 @@
 {
-    "name": "AI Fiskeassistent",
-    "short_name": "FiskeAssistent",
+    "name": "AI Fiskeassistent Pro",
+    "short_name": "Fiske-Assistent",
     "description": "Din personliga fiskeguide med AI",
     "start_url": "/",
     "display": "standalone",
