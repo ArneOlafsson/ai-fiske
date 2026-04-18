@@ -7,7 +7,7 @@ import { Button, Input, Card } from '@/components/ui/primitives';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { db, storage } from '@/lib/firebase';
-import { Loader2, Upload, ArrowLeft, Camera } from 'lucide-react';
+import { Loader2, Upload, ArrowLeft, Camera, Video } from 'lucide-react';
 import Link from 'next/link';
 
 export default function CreateCommunityPostPage() {
@@ -158,22 +158,41 @@ export default function CreateCommunityPostPage() {
             <Card className="p-6">
                 <form onSubmit={handleSubmit} className="space-y-6">
                     <div className="mb-6">
-                        <label className="block text-sm font-medium mb-2">Välj Bild</label>
-                        <label className="block w-full aspect-video border-2 border-dashed border-border rounded-xl flex flex-col items-center justify-center cursor-pointer hover:border-primary/50 transition-colors bg-secondary/5 relative overflow-hidden">
-                            {previewUrl ? (
-                                mediaType === 'video' ? (
-                                    <video src={previewUrl} controls playsInline preload="metadata" className="absolute inset-0 w-full h-full object-cover" />
+                        <label className="block text-sm font-medium mb-2">Välj Media</label>
+                        {!previewUrl ? (
+                            <div className="grid grid-cols-2 gap-4">
+                                <label className="flex flex-col items-center justify-center p-6 border-2 border-dashed border-border rounded-xl cursor-pointer hover:border-primary/50 bg-secondary/5 transition-colors">
+                                    <Camera className="w-8 h-8 mb-2 text-teal-600" />
+                                    <span className="text-sm font-medium">Ladda upp Bild</span>
+                                    <input type="file" accept="image/*" className="hidden" onChange={handleFileSelect} />
+                                </label>
+                                <label className="flex flex-col items-center justify-center p-6 border-2 border-dashed border-border rounded-xl cursor-pointer hover:border-primary/50 bg-secondary/5 transition-colors">
+                                    <Video className="w-8 h-8 mb-2 text-teal-600" />
+                                    <span className="text-sm font-medium">Ladda upp Film</span>
+                                    <input type="file" accept="video/*" className="hidden" onChange={handleFileSelect} />
+                                </label>
+                            </div>
+                        ) : (
+                            <div className="w-full aspect-video relative rounded-xl overflow-hidden border-2 border-border shadow-sm">
+                                {mediaType === 'video' ? (
+                                    <video src={previewUrl} controls playsInline preload="metadata" className="absolute inset-0 w-full h-full object-cover bg-black" />
                                 ) : (
-                                    <img src={previewUrl} alt="Preview" className="absolute inset-0 w-full h-full object-cover" />
-                                )
-                            ) : (
-                                <div className="text-center p-4 relative z-10">
-                                    <Camera className="w-12 h-12 mx-auto mb-2 text-muted-foreground" />
-                                    <p className="text-muted-foreground">Klicka för att ladda upp bild eller film</p>
-                                </div>
-                            )}
-                            <input type="file" className="hidden" onChange={handleFileSelect} required />
-                        </label>
+                                    <img src={previewUrl} alt="Preview" className="absolute inset-0 w-full h-full object-cover bg-secondary/10" />
+                                )}
+                                <Button 
+                                    type="button" 
+                                    variant="destructive" 
+                                    size="sm" 
+                                    className="absolute top-2 right-2 bg-red-600/90 hover:bg-red-700 text-white"
+                                    onClick={() => {
+                                        setPreviewUrl(null);
+                                        setImageFile(null);
+                                    }}
+                                >
+                                    Ta bort
+                                </Button>
+                            </div>
+                        )}
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
