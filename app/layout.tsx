@@ -33,6 +33,7 @@ export const metadata: Metadata = {
 
 import { AuthProvider } from "@/components/AuthProvider";
 import { Analytics } from "@vercel/analytics/next";
+import AutoUpdater from "@/components/AutoUpdater";
 
 export default function RootLayout({
   children,
@@ -45,6 +46,7 @@ export default function RootLayout({
         className={`${dmSans.className} ${playfair.variable} antialiased min-h-screen flex flex-col`}
       >
         <AuthProvider>
+          <AutoUpdater />
           <Navbar />
           <main className="flex-1">
             {children}
