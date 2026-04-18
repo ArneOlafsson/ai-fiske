@@ -185,16 +185,25 @@ export default function CommunityPage() {
         };
     }, []);
 
-    // Check which catches user has liked
+    // Ladda in användarens gillanden (likes) så de inte försvinner när man byter sida
     useEffect(() => {
-        if (!user || catches.length === 0) return;
-
-        // In a real app we might query 'likes' collection where uid == user.uid
-        // For MVP, simplistic check or just optimistic?
-        // Let's assume we don't query *all* likes. We check on the fly or just handle the action.
-        // Better: Fetch user's likes for displayed catches? 
-        // Doing lazy load or just local state toggle for UI responsiveness.
-    }, [user, catches]);
+        if (!user) return;
+        
+        const q = query(
+            collection(db, 'likes'), 
+            where('uid', '==', user.uid)
+        );
+        
+        const unsubscribe = onSnapshot(q, (snapshot) => {
+            const newLikedMap: Record<string, boolean> = {};
+            snapshot.docs.forEach(doc => {
+                newLikedMap[doc.data().catchId] = true;
+            });
+            setLikedMap(newLikedMap);
+        });
+        
+        return () => unsubscribe();
+    }, [user]);
 
     const handleLike = async (catchId: string, currentLikes: number) => {
         if (!user) return; // Should show login prompt?
