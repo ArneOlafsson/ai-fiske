@@ -2,7 +2,7 @@
 
 import { useAuth } from '@/components/AuthProvider';
 import { Button, Card } from '@/components/ui/primitives';
-import { Crown, Settings, LogOut, Check, Trash2, Globe, Lock, Timer, Ticket, User as UserIcon } from 'lucide-react';
+import { Crown, Settings, LogOut, Check, Trash2, Globe, Lock, Timer, Ticket, User as UserIcon, RefreshCw } from 'lucide-react';
 import { signOut } from 'firebase/auth';
 import { auth, db } from '@/lib/firebase';
 import { useRouter } from 'next/navigation';
@@ -89,6 +89,17 @@ function ProfileContent() {
         });
         return () => unsub();
     }, [user]);
+
+    const handleForceReload = () => {
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.getRegistrations().then(function(registrations) {
+                for(let registration of registrations) {
+                    registration.unregister();
+                }
+            });
+        }
+        window.location.reload();
+    };
 
     const handleLogout = async () => {
         await signOut(auth);
@@ -219,9 +230,14 @@ function ProfileContent() {
                         {profile.isPremium && <span className="bg-primary/20 text-primary px-2 py-0.5 rounded font-bold">Premium 2026</span>}
                     </div>
                 </div>
-                <Button variant="outline" onClick={handleLogout} className="text-destructive hover:bg-destructive/10">
-                    <LogOut className="w-4 h-4 mr-2" /> Logga ut
-                </Button>
+                <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
+                    <Button variant="secondary" onClick={handleForceReload} className="w-full sm:w-auto">
+                        <RefreshCw className="w-4 h-4 mr-2" /> Hämta Uppdateringar
+                    </Button>
+                    <Button variant="outline" onClick={handleLogout} className="w-full sm:w-auto text-destructive hover:bg-destructive/10">
+                        <LogOut className="w-4 h-4 mr-2" /> Logga ut
+                    </Button>
+                </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
