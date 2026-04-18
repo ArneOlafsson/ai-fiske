@@ -7,6 +7,7 @@ import { Camera, MapPin, ChefHat, MessageCircle } from "lucide-react";
 import { useAuth } from "@/components/AuthProvider";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
+import InstallPwaButton from "@/components/InstallPwaButton";
 
 export default function LandingPage() {
   const { user, loading } = useAuth();
@@ -51,7 +52,7 @@ export default function LandingPage() {
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.4 }}
-            className="flex flex-col sm:flex-row gap-4 justify-center"
+            className="flex flex-col sm:flex-row gap-4 justify-center items-center"
           >
             <Link href="/register">
               <Button size="lg" className="rounded-full text-lg px-8 py-6 shadow-lg shadow-primary/25">
@@ -63,6 +64,8 @@ export default function LandingPage() {
                 Logga in
               </Button>
             </Link>
+            <div className="hidden sm:block w-px h-10 bg-border mx-2"></div>
+            <InstallPwaButton />
           </motion.div>
         </div>
       </section>
