@@ -101,6 +101,9 @@ export default function CommunityPage() {
         profile?.email?.toLowerCase().trim() === 'arne@olafsson.se' ||
         profile?.role === 'admin';
 
+    const userEmail = (user?.email || profile?.email || '').toLowerCase().trim();
+    const isPremium = profile?.isPremium || userEmail === 'arvid.bertlid@icloud.com' || isAdmin;
+
     useEffect(() => {
         // Query public catches
         const q = query(
@@ -196,6 +199,11 @@ export default function CommunityPage() {
     const handleLike = async (catchId: string, currentLikes: number) => {
         if (!user) return; // Should show login prompt?
 
+        if (!isPremium) {
+            alert("Du behöver uppgradera till Premium för att interagera i Communityn.");
+            return;
+        }
+
         const isLiked = likedMap[catchId];
 
         // OPTIMISTIC UPDATE
@@ -261,11 +269,13 @@ export default function CommunityPage() {
                     <h1 className="text-3xl font-bold">Community & Fångst</h1>
                     <p className="text-muted-foreground">Se vad andra fiskare har fått upp nyligen.</p>
                 </div>
-                <Link href="/community/create">
-                    <Button className="w-full md:w-auto">
-                        + Skapa Inlägg
-                    </Button>
-                </Link>
+                {isPremium && (
+                    <Link href="/community/create">
+                        <Button className="w-full md:w-auto">
+                            + Skapa Inlägg
+                        </Button>
+                    </Link>
+                )}
             </div>
 
             <div className="space-y-6">
@@ -275,12 +285,21 @@ export default function CommunityPage() {
                 {catches.map((item) => (
                     <Card key={item.id} className="overflow-hidden bg-card/50 backdrop-blur-sm border-primary/10">
                         <div className="aspect-square relative bg-black/50">
-                            {/* Use standard img for demo since image domains not configured for Next.js Image */}
-                            <img
-                                src={item.imageUrl}
-                                alt={item.aiResult?.fishNameSv || "Fångst"}
-                                className="w-full h-full object-cover"
-                            />
+                            {item.mediaType === 'video' ? (
+                                <video
+                                    src={item.imageUrl}
+                                    controls
+                                    playsInline
+                                    preload="metadata"
+                                    className="w-full h-full object-cover"
+                                />
+                            ) : (
+                                <img
+                                    src={item.imageUrl}
+                                    alt={item.aiResult?.fishNameSv || "Fångst"}
+                                    className="w-full h-full object-cover"
+                                />
+                            )}
                             <div className="absolute top-4 right-4 bg-black/60 text-white px-3 py-1 rounded-full text-sm font-bold backdrop-blur-md">
                                 {item.aiResult?.fishNameSv || "Okänd"}
                             </div>

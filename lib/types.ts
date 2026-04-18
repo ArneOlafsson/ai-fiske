@@ -38,6 +38,7 @@ export interface Catch {
     ownerUid: string;
     ownerName?: string | null;
     imageUrl: string;
+    mediaType?: 'image' | 'video';
     createdAt: Timestamp;
     locationText: string;
     locationGeo?: { lat: number; lng: number };

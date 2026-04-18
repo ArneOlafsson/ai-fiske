@@ -38,10 +38,14 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                     userEmail === 'arne@olafsson.se';
     
     // Paths that are strictly allowed for free users
-    const allowedFreePaths = ['/dashboard', '/profile'];
+    const isAllowedFreePath = (path: string) => {
+        if (path === '/dashboard' || path === '/profile') return true;
+        if (path === '/community') return true;
+        return false;
+    };
 
     // Block logic: if user is logged in, NOT premium, NOT admin, and path is NOT in allowed list
-    if (user && !isPremium && !isAdmin && pathname && !allowedFreePaths.includes(pathname)) {
+    if (user && !isPremium && !isAdmin && pathname && !isAllowedFreePath(pathname)) {
         return (
             <div className="container mx-auto px-4 py-8 max-w-5xl md:pb-8 pb-24 h-[calc(100vh-100px)] flex flex-col items-center justify-center">
                 <Crown className="w-20 h-20 text-[#5EC4A1] mx-auto mb-6 opacity-90" />

@@ -22,6 +22,10 @@ export default function CommentSection({ catchId, count = 0 }: CommentSectionPro
     const [loading, setLoading] = useState(false);
     const [isOpen, setIsOpen] = useState(false);
 
+    const userEmail = (user?.email || profile?.email || '').toLowerCase().trim();
+    const isAdmin = profile?.role === 'admin' || userEmail === 'johan@animaldeli.com' || userEmail === 'arne@olafsson.se';
+    const isPremium = profile?.isPremium || userEmail === 'arvid.bertlid@icloud.com' || isAdmin;
+
     useEffect(() => {
         if (!isOpen) return;
 
@@ -184,18 +188,27 @@ export default function CommentSection({ catchId, count = 0 }: CommentSectionPro
                         ))}
                     </div>
 
-                    <form onSubmit={handleSubmit} className="flex gap-2">
-                        <Input
-                            value={newComment}
-                            onChange={(e) => setNewComment(e.target.value)}
-                            placeholder="Skriv en kommentar..."
-                            disabled={loading}
-                            className="flex-1"
-                        />
-                        <Button type="submit" size="sm" disabled={loading || !newComment.trim()}>
-                            <Send className="w-4 h-4" />
-                        </Button>
-                    </form>
+                    {isPremium ? (
+                        <form onSubmit={handleSubmit} className="flex gap-2">
+                            <Input
+                                value={newComment}
+                                onChange={(e) => setNewComment(e.target.value)}
+                                placeholder="Skriv en kommentar..."
+                                disabled={loading}
+                                className="flex-1"
+                            />
+                            <Button type="submit" size="sm" disabled={loading || !newComment.trim()}>
+                                <Send className="w-4 h-4" />
+                            </Button>
+                        </form>
+                    ) : (
+                        <div className="bg-primary/10 border border-primary/20 rounded-lg p-3 text-center">
+                            <p className="text-sm text-muted-foreground mb-2">Du behöver Premium för att kunna kommentera.</p>
+                            <Button size="sm" variant="outline" className="w-full text-primary border-primary/50 hover:bg-primary/20 font-bold" onClick={() => window.location.href = '/profile'}>
+                                Uppgradera nu
+                            </Button>
+                        </div>
+                    )}
                 </div>
             )}
         </div>

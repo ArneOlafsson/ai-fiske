@@ -64,6 +64,7 @@ export async function POST(request: Request) {
             "cookingMethod": "Stekning" | "Ugn" | "Grillning" | "Soppa"
         }
         Om det inte är en fisk, sätt "fishNameSv": "Okänd" och confidence lågt.
+        VIKTIGT: För fiskar som generellt är kända som fina matfiskar (t.ex. Röding, Abborre, Gös, Lax, Öring), svara ALLTID "Ja" på 'edible'. Använd endast "Beror på" om det är en art där matkvaliteten rymmer stor variation eller vanligtvis returneras (t.ex. äldre Gädda, Braxen).
         `;
 
         const result = await model.generateContent([prompt, imagePart]);

@@ -20,6 +20,7 @@ export default function CreateCommunityPostPage() {
     const [comment, setComment] = useState('');
     const [imageFile, setImageFile] = useState<File | null>(null);
     const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+    const [mediaType, setMediaType] = useState<'image' | 'video'>('image');
     const [isSubmitting, setIsSubmitting] = useState(false);
 
     if (loading) return null;
@@ -56,6 +57,9 @@ export default function CreateCommunityPostPage() {
             const file = e.target.files[0];
             setImageFile(file);
             setPreviewUrl(URL.createObjectURL(file));
+            
+            const isVideo = file.type.startsWith('video/') || (file.name && /\.(mp4|mov|webm|mkv|avchd)$/i.test(file.name));
+            setMediaType(isVideo ? 'video' : 'image');
         }
     };
 
@@ -69,23 +73,37 @@ export default function CreateCommunityPostPage() {
         setIsSubmitting(true);
 
         try {
-            // Compress Image
+            // Process Image or Video
             let uploadBlob: Blob = imageFile as Blob;
-            try {
-                if (previewUrl) {
-                    const b64 = await blobToBase64(previewUrl);
-                    const res = await fetch(b64);
-                    uploadBlob = await res.blob();
+            if (mediaType === 'image') {
+                try {
+                    if (previewUrl) {
+                        const b64 = await blobToBase64(previewUrl);
+                        const res = await fetch(b64);
+                        uploadBlob = await res.blob();
+                    }
+                } catch (err) {
+                    console.warn("Compression failed", err);
                 }
-            } catch (err) {
-                console.warn("Compression failed", err);
             }
 
-            // Upload Image
+            // Upload File
             let imageUrl = '';
+            
+            let fileExt = mediaType === 'video' ? 'mp4' : 'jpg';
+            if (mediaType === 'video' && imageFile.name) {
+                const parts = imageFile.name.split('.');
+                if (parts.length > 1) {
+                    fileExt = parts[parts.length - 1];
+                }
+            }
+
             if (storage && user) {
-                const storageRef = ref(storage, `catches/${user.uid}/${Date.now()}_capture.jpg`);
-                const uploadRes = await uploadBytes(storageRef, uploadBlob);
+                const storageRef = ref(storage, `catches/${user.uid}/${Date.now()}_capture.${fileExt}`);
+                const metadata = {
+                    contentType: mediaType === 'video' ? (imageFile.type || 'video/mp4') : 'image/jpeg',
+                };
+                const uploadRes = await uploadBytes(storageRef, uploadBlob, metadata);
                 imageUrl = await getDownloadURL(uploadRes.ref);
             }
 
@@ -94,6 +112,7 @@ export default function CreateCommunityPostPage() {
                 ownerUid: user?.uid,
                 ownerName: profile?.displayName || user?.email || 'Anonym',
                 imageUrl,
+                mediaType,
                 locationText,
                 waterType,
                 comment,
@@ -142,14 +161,18 @@ export default function CreateCommunityPostPage() {
                         <label className="block text-sm font-medium mb-2">Välj Bild</label>
                         <label className="block w-full aspect-video border-2 border-dashed border-border rounded-xl flex flex-col items-center justify-center cursor-pointer hover:border-primary/50 transition-colors bg-secondary/5 relative overflow-hidden">
                             {previewUrl ? (
-                                <img src={previewUrl} alt="Preview" className="absolute inset-0 w-full h-full object-cover" />
+                                mediaType === 'video' ? (
+                                    <video src={previewUrl} controls playsInline preload="metadata" className="absolute inset-0 w-full h-full object-cover" />
+                                ) : (
+                                    <img src={previewUrl} alt="Preview" className="absolute inset-0 w-full h-full object-cover" />
+                                )
                             ) : (
                                 <div className="text-center p-4 relative z-10">
                                     <Camera className="w-12 h-12 mx-auto mb-2 text-muted-foreground" />
-                                    <p className="text-muted-foreground">Klicka för att ladda upp bild</p>
+                                    <p className="text-muted-foreground">Klicka för att ladda upp bild eller film</p>
                                 </div>
                             )}
-                            <input type="file" accept="image/jpeg, image/png, image/webp" className="hidden" onChange={handleFileSelect} required />
+                            <input type="file" className="hidden" onChange={handleFileSelect} required />
                         </label>
                     </div>
 
