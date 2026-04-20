@@ -3,7 +3,7 @@
 import { useAuth } from "@/components/AuthProvider";
 import { Button, Card } from "@/components/ui/primitives";
 import Link from "next/link";
-import { Camera, MapPin, MessageCircle, Users, Crown, Zap, Lightbulb, Anchor, Sparkles, ArrowRight } from "lucide-react";
+import { Camera, MapPin, MessageCircle, Users, Crown, Zap, Lightbulb, Anchor, Sparkles, ArrowRight, Cloud, ArrowUpRight, Wind, Droplets } from "lucide-react";
 
 export default function Dashboard() {
     const { profile, loading } = useAuth();
@@ -76,6 +76,15 @@ export default function Dashboard() {
                     badge="Utrustning"
                     icon={<Anchor className="w-5 h-5 text-white/70" />}
                     accentColor="#06b6d4" 
+                />
+
+                <FeatureCard 
+                    href="/weather"
+                    title="Väder & Lufttryck"
+                    desc="Lokala prognoser optimerade för fiske."
+                    badge="Prognos"
+                    icon={<Cloud className="w-5 h-5 text-white/70" />}
+                    accentColor="#0ea5e9"
                 />
 
                 <FeatureCard 
