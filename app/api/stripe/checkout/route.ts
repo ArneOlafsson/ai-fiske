@@ -47,7 +47,7 @@ export async function POST(request: Request) {
             });
 
             if (promotionCodes.data.length > 0) {
-                const couponId = promotionCodes.data[0].coupon.id;
+                const couponId = (promotionCodes.data[0] as any).coupon.id;
                 discounts = [{ coupon: couponId }];
             } else {
                 // Return 400 if code is invalid, so UI can show error

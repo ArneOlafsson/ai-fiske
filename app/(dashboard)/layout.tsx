@@ -2,15 +2,17 @@
 
 import { useAuth } from "@/components/AuthProvider";
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Home, Map as MapIcon, List, User, Crown } from "lucide-react";
+import { Home, Map as MapIcon, List, User, Crown, Download } from "lucide-react";
 import { Button } from "@/components/ui/primitives";
+import { InstallAppModal } from "@/components/InstallAppModal";
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
     const { user, profile, loading } = useAuth();
     const router = useRouter();
     const pathname = usePathname();
+    const [isInstallModalOpen, setIsInstallModalOpen] = useState(false);
 
     // Removed auth check to allow Guest Access
     /*
@@ -90,12 +92,12 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                     </div>
                     <span className="text-[10px] font-medium tracking-wider mt-1">Hem</span>
                 </Link>
-                <Link href="/spots" className="flex flex-col items-center text-muted-foreground hover:text-primary group transition-colors">
+                <button onClick={() => setIsInstallModalOpen(true)} className="flex flex-col items-center text-muted-foreground hover:text-primary group transition-colors">
                     <div className="w-10 h-10 flex items-center justify-center rounded-full group-hover:bg-primary/10">
-                        <MapIcon className="w-5 h-5" />
+                        <Download className="w-5 h-5" />
                     </div>
-                    <span className="text-[10px] font-medium tracking-wider mt-1">Karta</span>
-                </Link>
+                    <span className="text-[10px] font-medium tracking-wider mt-1">App</span>
+                </button>
 
                 <Link href="/profile" className="flex flex-col items-center text-muted-foreground hover:text-primary group transition-colors">
                     <div className="w-10 h-10 flex items-center justify-center rounded-full group-hover:bg-primary/10">
@@ -104,6 +106,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                     <span className="text-[10px] font-medium tracking-wider mt-1">Profil</span>
                 </Link>
             </nav>
+
+            <InstallAppModal 
+                isOpen={isInstallModalOpen} 
+                onClose={() => setIsInstallModalOpen(false)} 
+            />
         </div>
     );
 }

@@ -28,8 +28,8 @@ function ProfileContent() {
 
     useEffect(() => {
         // Handle Verification (Real)
-        const sessionId = searchParams.get('session_id');
-        const paymentStatus = searchParams.get('payment');
+        const sessionId = searchParams?.get('session_id');
+        const paymentStatus = searchParams?.get('payment');
 
         if (user && paymentStatus === 'success' && sessionId) {
             if (verifyingSession.current === sessionId) return;
