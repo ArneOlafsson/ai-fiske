@@ -52,15 +52,6 @@ export default function Dashboard() {
                 <h2 className="text-muted-foreground font-bold text-xs tracking-widest uppercase mb-4">Verktyg</h2>
                 
                 <FeatureCard 
-                    href="/install"
-                    title="Ladda ner appen"
-                    desc="Installera fiskeappen direkt på din hemskärm för enklare åtkomst."
-                    badge="Guide & Installation"
-                    icon={<Download className="w-5 h-5 text-white/70" />}
-                    accentColor="#ef4444" 
-                />
-
-                <FeatureCard 
                     href="/community"
                     title="Community & Fångst"
                     desc="Se andras fångster och dela dina egna."
