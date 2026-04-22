@@ -3,7 +3,7 @@
 import { useAuth } from "@/components/AuthProvider";
 import { Button, Card } from "@/components/ui/primitives";
 import Link from "next/link";
-import { Camera, MapPin, MessageCircle, Users, Crown, Zap, Lightbulb, Anchor, Sparkles, ArrowRight, Cloud, ArrowUpRight, Wind, Droplets } from "lucide-react";
+import { Camera, MapPin, MessageCircle, Users, Crown, Zap, Lightbulb, Anchor, Sparkles, ArrowRight, Cloud, ArrowUpRight, Wind, Droplets, Download } from "lucide-react";
 
 export default function Dashboard() {
     const { profile, loading } = useAuth();
@@ -51,6 +51,15 @@ export default function Dashboard() {
             <div className="space-y-4">
                 <h2 className="text-muted-foreground font-bold text-xs tracking-widest uppercase mb-4">Verktyg</h2>
                 
+                <FeatureCard 
+                    href="/install"
+                    title="Ladda ner appen"
+                    desc="Installera fiskeappen direkt på din hemskärm för enklare åtkomst."
+                    badge="Guide & Installation"
+                    icon={<Download className="w-5 h-5 text-white/70" />}
+                    accentColor="#ef4444" 
+                />
+
                 <FeatureCard 
                     href="/community"
                     title="Community & Fångst"

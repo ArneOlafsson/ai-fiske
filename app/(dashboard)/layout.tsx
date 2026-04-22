@@ -43,6 +43,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     const isAllowedFreePath = (path: string) => {
         if (path === '/dashboard' || path === '/profile') return true;
         if (path === '/community') return true;
+        if (path === '/install') return true;
         return false;
     };
 
