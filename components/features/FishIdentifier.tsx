@@ -42,7 +42,7 @@ export default function FishIdentifier() {
         const userEmail = (user?.email || profile?.email || '').toLowerCase().trim();
         const isAdmin = profile?.role === 'admin' || 
                         userEmail === 'johan@animaldeli.com' || 
-                        userEmail === 'arne@olafsson.se';
+                        (userEmail === 'arne@olafsson.se' || userEmail === 'arne.olafsson@gmail.com');
         const isManualPremium = userEmail === 'arvid.bertlid@icloud.com';
 
         if (!profile?.isPremium && !isAdmin && !isManualPremium) {

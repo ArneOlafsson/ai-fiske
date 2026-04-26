@@ -24,7 +24,7 @@ export default function CreateTipPage() {
     if (loading) return null;
 
     // Strict Permission Check
-    const canCreate = profile?.role === 'admin' || user?.email === 'johan@animaldeli.com' || user?.email === 'arne@olafsson.se';
+    const canCreate = profile?.role === 'admin' || user?.email === 'johan@animaldeli.com' || (user?.email === 'arne@olafsson.se' || user?.email === 'arne.olafsson@gmail.com');
 
     if (!canCreate) {
         return (

@@ -96,9 +96,9 @@ export default function CommunityPage() {
 
     const isAdmin = 
         user?.email?.toLowerCase().trim() === 'johan@animaldeli.com' || 
-        user?.email?.toLowerCase().trim() === 'arne@olafsson.se' ||
+        (user?.email?.toLowerCase().trim() === 'arne@olafsson.se' || user?.email?.toLowerCase().trim() === 'arne.olafsson@gmail.com') ||
         profile?.email?.toLowerCase().trim() === 'johan@animaldeli.com' ||
-        profile?.email?.toLowerCase().trim() === 'arne@olafsson.se' ||
+        (profile?.email?.toLowerCase().trim() === 'arne@olafsson.se' || profile?.email?.toLowerCase().trim() === 'arne.olafsson@gmail.com') ||
         profile?.role === 'admin';
 
     const userEmail = (user?.email || profile?.email || '').toLowerCase().trim();

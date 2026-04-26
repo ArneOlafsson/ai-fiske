@@ -25,7 +25,7 @@ export default function EquipmentPage() {
     const [equipment, setEquipment] = useState<Equipment[]>([]);
     const [loading, setLoading] = useState(true);
 
-    const canCreate = profile?.role === 'admin' || user?.email === 'johan@animaldeli.com' || user?.email === 'arne@olafsson.se';
+    const canCreate = profile?.role === 'admin' || user?.email === 'johan@animaldeli.com' || (user?.email === 'arne@olafsson.se' || user?.email === 'arne.olafsson@gmail.com');
 
     useEffect(() => {
         const fetchEquipment = async () => {

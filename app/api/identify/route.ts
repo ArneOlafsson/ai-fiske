@@ -19,7 +19,12 @@ export async function POST(request: Request) {
         }
 
         // Updated to use gemini-2.5-flash as 1.5 is deprecated
-        const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+        const model = genAI.getGenerativeModel({ 
+            model: "gemini-2.5-flash",
+            generationConfig: {
+                responseMimeType: "application/json"
+            }
+        });
 
         // Prepare image part
         let imagePart;

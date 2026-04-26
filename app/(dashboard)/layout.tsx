@@ -37,7 +37,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     const isPremium = profile?.isPremium || userEmail === 'arvid.bertlid@icloud.com';
     const isAdmin = profile?.role === 'admin' || 
                     userEmail === 'johan@animaldeli.com' || 
-                    userEmail === 'arne@olafsson.se';
+                    (userEmail === 'arne@olafsson.se' || userEmail === 'arne.olafsson@gmail.com');
     
     // Paths that are strictly allowed for free users
     const isAllowedFreePath = (path: string) => {
