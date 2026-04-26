@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { collection, query, where, limit, onSnapshot, doc, updateDoc, increment, setDoc, deleteDoc } from 'firebase/firestore';
+import { collection, query, where, limit, onSnapshot, doc, updateDoc, increment, setDoc, deleteDoc, orderBy } from 'firebase/firestore';
 import { db, storage } from '@/lib/firebase';
 import { ref, deleteObject } from 'firebase/storage';
 import { Catch } from '@/lib/types';
@@ -105,12 +105,11 @@ export default function CommunityPage() {
     const isPremium = profile?.isPremium || userEmail === 'arvid.bertlid@icloud.com' || isAdmin;
 
     useEffect(() => {
-        // Query public catches
         const q = query(
             collection(db, 'catches'),
             where('isPublic', '==', true),
-            limit(20)
-            // Removed orderBy('createdAt', 'desc') to avoid missing Index
+            orderBy('createdAt', 'desc'),
+            limit(50)
         );
 
         const getLocalCatches = () => {
@@ -128,6 +127,8 @@ export default function CommunityPage() {
                     const d = new Date(dateVal);
                     // Check valid date
                     if (isNaN(d.getTime())) return null;
+                    // Skip local items with blob URLs as they break across sessions
+                    if (c.imageUrl?.startsWith('blob:')) return null;
 
                     return {
                         ...c,
@@ -138,7 +139,7 @@ export default function CommunityPage() {
         };
 
         const unsubscribe = onSnapshot(q, (snapshot) => {
-            const items = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Catch[];
+            const items = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })).filter((item: any) => item.isPublic) as Catch[];
 
             // Allow merging local catches (for the user's own view) even if DB has items
             const local = getLocalCatches();
@@ -148,8 +149,8 @@ export default function CommunityPage() {
 
             // Sort Client-side (descending)
             allItems.sort((a, b) => {
-                const tA = a.createdAt?.seconds ? a.createdAt.seconds * 1000 : (a.createdAt?.toDate ? a.createdAt.toDate().getTime() : (a.createdAt ? new Date(a.createdAt).getTime() : 0));
-                const tB = b.createdAt?.seconds ? b.createdAt.seconds * 1000 : (b.createdAt?.toDate ? b.createdAt.toDate().getTime() : (b.createdAt ? new Date(b.createdAt).getTime() : 0));
+                const tA = a.createdAt?.seconds ? a.createdAt.seconds * 1000 : (a.createdAt?.toDate ? a.createdAt.toDate().getTime() : (a.createdAt ? new Date(a.createdAt).getTime() : Date.now()));
+                const tB = b.createdAt?.seconds ? b.createdAt.seconds * 1000 : (b.createdAt?.toDate ? b.createdAt.toDate().getTime() : (b.createdAt ? new Date(b.createdAt).getTime() : Date.now()));
                 return (tB || 0) - (tA || 0);
             });
 

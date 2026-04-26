@@ -22,6 +22,7 @@ export default function CreateCommunityPostPage() {
     const [previewUrl, setPreviewUrl] = useState<string | null>(null);
     const [mediaType, setMediaType] = useState<'image' | 'video'>('image');
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [uploadProgress, setUploadProgress] = useState(0);
 
     if (loading) return null;
 
@@ -101,8 +102,28 @@ export default function CreateCommunityPostPage() {
                 const metadata = {
                     contentType: mediaType === 'video' ? (imageFile.type || 'video/mp4') : 'image/jpeg',
                 };
-                const uploadRes = await uploadBytes(storageRef, uploadBlob, metadata);
-                imageUrl = await getDownloadURL(uploadRes.ref);
+                
+                // Use uploadBytesResumable for progress tracking (crucial for large videos)
+                const { uploadBytesResumable } = await import('firebase/storage');
+                const uploadTask = uploadBytesResumable(storageRef, uploadBlob, metadata);
+
+                imageUrl = await new Promise((resolve, reject) => {
+                    uploadTask.on('state_changed',
+                        (snapshot) => {
+                            const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+                            setUploadProgress(Math.round(progress));
+                        },
+                        (error) => {
+                            reject(error);
+                        },
+                        async () => {
+                            const downloadUrl = await getDownloadURL(uploadTask.snapshot.ref);
+                            resolve(downloadUrl);
+                        }
+                    );
+                });
+            } else if (!user) {
+                throw new Error("Du måste vara inloggad för att ladda upp.");
             }
 
             // Save Post to catches collection
@@ -139,6 +160,7 @@ export default function CreateCommunityPostPage() {
             alert("Kunde inte lägga upp: " + error.message);
         } finally {
             setIsSubmitting(false);
+            setUploadProgress(0);
         }
     };
 
@@ -236,12 +258,20 @@ export default function CreateCommunityPostPage() {
                         />
                     </div>
 
-                    <Button type="submit" className="w-full" size="lg" disabled={isSubmitting}>
-                        {isSubmitting ? (
-                            <><Loader2 className="animate-spin mr-2" /> Laddar upp...</>
-                        ) : (
-                            <><Upload className="w-4 h-4 mr-2" /> Dela i Community</>
+                    <Button type="submit" className="w-full relative overflow-hidden" size="lg" disabled={isSubmitting}>
+                        {isSubmitting && (
+                            <div 
+                                className="absolute left-0 top-0 bottom-0 bg-black/20 transition-all duration-300" 
+                                style={{ width: `${uploadProgress}%` }}
+                            />
                         )}
+                        <span className="relative flex items-center z-10">
+                            {isSubmitting ? (
+                                <><Loader2 className="animate-spin mr-2" /> Laddar upp ({uploadProgress}%)</>
+                            ) : (
+                                <><Upload className="w-4 h-4 mr-2" /> Dela i Community</>
+                            )}
+                        </span>
                     </Button>
                 </form>
             </Card>
