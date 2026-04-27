@@ -107,7 +107,6 @@ export default function CommunityPage() {
     useEffect(() => {
         const q = query(
             collection(db, 'catches'),
-            where('isPublic', '==', true),
             orderBy('createdAt', 'desc'),
             limit(50)
         );
