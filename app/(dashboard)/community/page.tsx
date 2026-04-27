@@ -105,11 +105,8 @@ export default function CommunityPage() {
     const isPremium = profile?.isPremium || userEmail === 'arvid.bertlid@icloud.com' || isAdmin;
 
     useEffect(() => {
-        const q = query(
-            collection(db, 'catches'),
-            orderBy('createdAt', 'desc'),
-            limit(50)
-        );
+        // Bypass Firestore SDK query bugs by fetching raw collection and sorting client-side
+        const q = query(collection(db, 'catches'));
 
         const getLocalCatches = () => {
             if (typeof window === 'undefined') return [];
@@ -156,7 +153,7 @@ export default function CommunityPage() {
             if (allItems.length === 0) {
                 setCatches(MOCK_CATCHES);
             } else {
-                setCatches(allItems);
+                setCatches(allItems.slice(0, 50));
             }
             setLoading(false);
         }, (err) => {
