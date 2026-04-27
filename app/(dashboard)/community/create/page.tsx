@@ -160,7 +160,7 @@ export default function CreateCommunityPostPage() {
                 isPublic: true,
                 likesCount: 0,
                 commentsCount: 0,
-                createdAt: Date.now(),
+                createdAt: serverTimestamp(),
                 aiResult: {
                     fishNameSv: species || 'Fångst',
                     fishNameLatin: 'Manuell inmatning',
