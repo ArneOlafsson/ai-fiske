@@ -114,6 +114,7 @@ export default function CreateEquipmentPage() {
                         <label className="block text-sm font-medium mb-2">Omslagsbild</label>
                         <div className="border-2 border-dashed border-border rounded-xl p-4 text-center cursor-pointer hover:bg-secondary/20 transition-colors relative h-48 flex items-center justify-center overflow-hidden">
                             <input
+                                key={previewUrl ? 'has-preview' : 'no-preview'}
                                 type="file"
                                 accept="image/*"
                                 onChange={handleFileSelect}

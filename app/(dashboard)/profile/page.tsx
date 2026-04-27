@@ -148,6 +148,18 @@ function ProfileContent() {
                 const imageRef = ref(storage, imageUrl);
                 await deleteObject(imageRef).catch(e => console.warn("Kunde inte radera bild från storage:", e));
             }
+            
+            // Clean up from local storage to prevent ghost item
+            try {
+                const local = JSON.parse(localStorage.getItem('local_catches') || '[]');
+                const updatedLocal = local.filter((c: any) => c.id !== catchId);
+                localStorage.setItem('local_catches', JSON.stringify(updatedLocal));
+                
+                // Force UI update immediately
+                setMyCatches(prev => prev.filter(c => c.id !== catchId));
+            } catch (err) {
+                console.warn("Kunde inte rensa lokal cache", err);
+            }
         }
     };
 

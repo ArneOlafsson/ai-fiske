@@ -79,9 +79,7 @@ export default function FishIdentifier() {
                     let uploadBlob: Blob = imageFile as Blob;
                     try {
                         if (previewUrl) {
-                            const b64 = await blobToBase64(previewUrl);
-                            const res = await fetch(b64);
-                            uploadBlob = await res.blob();
+                            uploadBlob = await compressImageToBlob(previewUrl);
                         }
                     } catch (resizeErr) {
                         console.warn("Kunde inte komprimera bilden, använder original", resizeErr);
@@ -182,6 +180,40 @@ export default function FishIdentifier() {
         });
     };
 
+    // Helper to compress directly to Blob (avoids fetch memory crashes on iOS)
+    const compressImageToBlob = async (blobUrl: string): Promise<Blob> => {
+        return new Promise((resolve, reject) => {
+            const img = new window.Image();
+            img.src = blobUrl;
+            img.onload = () => {
+                const canvas = document.createElement('canvas');
+                const MAX_WIDTH = 800;
+                const scale = MAX_WIDTH / img.width;
+                const width = scale < 1 ? MAX_WIDTH : img.width;
+                const height = scale < 1 ? img.height * scale : img.height;
+
+                canvas.width = width;
+                canvas.height = height;
+                const ctx = canvas.getContext('2d');
+                if (!ctx) {
+                    reject(new Error("Canvas context failed"));
+                    return;
+                }
+                ctx.drawImage(img, 0, 0, width, height);
+                
+                canvas.toBlob(
+                    (blob) => {
+                        if (blob) resolve(blob);
+                        else reject(new Error("Canvas toBlob failed"));
+                    },
+                    'image/jpeg',
+                    0.7
+                );
+            };
+            img.onerror = reject;
+        });
+    };
+
     const handleSaveCatch = async () => {
         if (!user) return;
 
@@ -275,7 +307,7 @@ export default function FishIdentifier() {
                     <h2 className="text-2xl font-bold mb-4">Ladda upp fångst</h2>
 
                     <div className="mb-6">
-                        <label className="block w-full aspect-video border-2 border-dashed border-border rounded-xl flex flex-col items-center justify-center cursor-pointer hover:border-primary/50 transition-colors bg-secondary/5">
+                        <label className="relative block w-full aspect-video border-2 border-dashed border-border rounded-xl flex flex-col items-center justify-center cursor-pointer hover:border-primary/50 transition-colors bg-secondary/5 overflow-hidden">
                             {previewUrl ? (
                                 <div className="relative w-full h-full">
                                     <img src={previewUrl} alt="Preview" className="w-full h-full object-cover rounded-lg" />
@@ -284,12 +316,12 @@ export default function FishIdentifier() {
                                     </div>
                                 </div>
                             ) : (
-                                <div className="text-center p-4">
+                                <div className="text-center p-4 relative z-10 pointer-events-none">
                                     <Camera className="w-12 h-12 mx-auto mb-2 text-muted-foreground" />
                                     <p className="text-muted-foreground">Klicka för att ta foto eller välja bild</p>
                                 </div>
                             )}
-                            <input type="file" accept="image/jpeg, image/png, image/webp" className="hidden" onChange={handleFileSelect} />
+                            <input key={previewUrl ? 'has-preview' : 'no-preview'} type="file" accept="image/jpeg, image/png, image/webp, image/heic, image/heif" className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-20" onChange={handleFileSelect} />
                         </label>
                     </div>
 
@@ -338,7 +370,11 @@ export default function FishIdentifier() {
                             </div>
                         </div>
 
-                        <Button className="w-full mb-4" onClick={() => setResult(null)} variant="outline">
+                        <Button className="w-full mb-4" onClick={() => {
+                            setResult(null);
+                            setPreviewUrl(null);
+                            setImageFile(null);
+                        }} variant="outline">
                             Ta ny bild
                         </Button>
                     </Card>

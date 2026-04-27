@@ -26,8 +26,8 @@ export default function CreateCommunityPostPage() {
 
     if (loading) return null;
 
-    // Helper to compress image
-    const blobToBase64 = async (blobUrl: string): Promise<string> => {
+    // Helper to compress image efficiently without large Base64 strings
+    const compressImageToBlob = async (blobUrl: string): Promise<Blob> => {
         return new Promise((resolve, reject) => {
             const img = new window.Image();
             img.src = blobUrl;
@@ -46,8 +46,15 @@ export default function CreateCommunityPostPage() {
                     return;
                 }
                 ctx.drawImage(img, 0, 0, width, height);
-                // Compress to JPEG
-                resolve(canvas.toDataURL('image/jpeg', 0.7));
+                // Compress to JPEG directly to Blob
+                canvas.toBlob(
+                    (blob) => {
+                        if (blob) resolve(blob);
+                        else reject(new Error("Canvas toBlob failed"));
+                    },
+                    'image/jpeg',
+                    0.7
+                );
             };
             img.onerror = reject;
         });
@@ -77,9 +84,7 @@ export default function CreateCommunityPostPage() {
             if (mediaType === 'image') {
                 try {
                     if (previewUrl) {
-                        const b64 = await blobToBase64(previewUrl);
-                        const res = await fetch(b64);
-                        uploadBlob = await res.blob();
+                        uploadBlob = await compressImageToBlob(previewUrl);
                     }
                 } catch (err) {
                     console.warn("Compression failed", err);
@@ -153,6 +158,14 @@ export default function CreateCommunityPostPage() {
                 }
             });
 
+            // Reset state
+            setSpecies('');
+            setLocationText('');
+            setWaterType('sjö');
+            setComment('');
+            setImageFile(null);
+            setPreviewUrl(null);
+
             alert("Fångst uppladdad till Community!");
             router.push('/community');
         } catch (error: any) {
@@ -181,15 +194,15 @@ export default function CreateCommunityPostPage() {
                         <label className="block text-sm font-medium mb-2">Välj Media</label>
                         {!previewUrl ? (
                             <div className="grid grid-cols-2 gap-4">
-                                <label className="flex flex-col items-center justify-center p-6 border-2 border-dashed border-border rounded-xl cursor-pointer hover:border-primary/50 bg-secondary/5 transition-colors">
+                                <label className="relative flex flex-col items-center justify-center p-6 border-2 border-dashed border-border rounded-xl cursor-pointer hover:border-primary/50 bg-secondary/5 transition-colors overflow-hidden">
                                     <Camera className="w-8 h-8 mb-2 text-teal-600" />
                                     <span className="text-sm font-medium">Ladda upp Bild</span>
-                                    <input type="file" accept="image/*" className="hidden" onChange={(e) => handleFileSelect(e, 'image')} />
+                                    <input key={Date.now() + "img"} type="file" accept="image/*, image/heic, image/heif" className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" onChange={(e) => handleFileSelect(e, 'image')} />
                                 </label>
-                                <label className="flex flex-col items-center justify-center p-6 border-2 border-dashed border-border rounded-xl cursor-pointer hover:border-primary/50 bg-secondary/5 transition-colors">
+                                <label className="relative flex flex-col items-center justify-center p-6 border-2 border-dashed border-border rounded-xl cursor-pointer hover:border-primary/50 bg-secondary/5 transition-colors overflow-hidden">
                                     <Video className="w-8 h-8 mb-2 text-teal-600" />
                                     <span className="text-sm font-medium">Ladda upp Film</span>
-                                    <input type="file" accept="video/*" className="hidden" onChange={(e) => handleFileSelect(e, 'video')} />
+                                    <input key={Date.now() + "vid"} type="file" accept="video/*, video/mp4, video/quicktime" className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" onChange={(e) => handleFileSelect(e, 'video')} />
                                 </label>
                             </div>
                         ) : (
