@@ -202,6 +202,11 @@ export default function CreateCommunityPostPage() {
             setLocationText('');
             setWaterType('sjö');
             setComment('');
+            if (previewUrl) {
+                URL.revokeObjectURL(previewUrl);
+            }
+            setImageFile(null);
+            setPreviewUrl(null);
             // Navigate to feed
             router.push('/community');
         } catch (error: any) {
