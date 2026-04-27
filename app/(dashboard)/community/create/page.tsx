@@ -165,7 +165,7 @@ export default function CreateCommunityPostPage() {
             setPreviewUrl(null);
 
             alert("Fångst uppladdad till Community!");
-            router.push('/community');
+            window.location.href = '/community';
         } catch (error: any) {
             console.error("Error creating post:", error);
             alert("Kunde inte lägga upp: " + error.message);
