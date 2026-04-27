@@ -215,6 +215,7 @@ export default function CreateCommunityPostPage() {
             }
             setImageFile(null);
             setPreviewUrl(null);
+            setInputKey(Date.now()); // Completely clear the file input DOM to allow consecutive uploads
             // Navigate to feed
             router.push('/community');
         } catch (error: any) {
