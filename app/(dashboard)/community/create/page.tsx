@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/components/AuthProvider';
 import { Button, Input, Card } from '@/components/ui/primitives';
 import { ref, uploadBytes, getDownloadURL, uploadBytesResumable } from 'firebase/storage';
-import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { collection, addDoc, serverTimestamp, Timestamp } from 'firebase/firestore';
 import { db, storage } from '@/lib/firebase';
 import { Loader2, Upload, ArrowLeft, Camera, Video } from 'lucide-react';
 import Link from 'next/link';
@@ -160,7 +160,7 @@ export default function CreateCommunityPostPage() {
                 isPublic: true,
                 likesCount: 0,
                 commentsCount: 0,
-                createdAt: serverTimestamp(),
+                createdAt: Timestamp.now(),
                 aiResult: {
                     fishNameSv: species || 'Fångst',
                     fishNameLatin: 'Manuell inmatning',
