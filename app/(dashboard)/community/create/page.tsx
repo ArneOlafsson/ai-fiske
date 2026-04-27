@@ -202,12 +202,12 @@ export default function CreateCommunityPostPage() {
                                 <label className="relative flex flex-col items-center justify-center p-6 border-2 border-dashed border-border rounded-xl cursor-pointer hover:border-primary/50 bg-secondary/5 transition-colors overflow-hidden">
                                     <Camera className="w-8 h-8 mb-2 text-teal-600" />
                                     <span className="text-sm font-medium">Ladda upp Bild</span>
-                                    <input key={Date.now() + "img"} type="file" accept="image/*, image/heic, image/heif" className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" onChange={(e) => handleFileSelect(e, 'image')} />
+                                    <input type="file" accept="image/*, image/heic, image/heif" className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" onChange={(e) => handleFileSelect(e, 'image')} />
                                 </label>
                                 <label className="relative flex flex-col items-center justify-center p-6 border-2 border-dashed border-border rounded-xl cursor-pointer hover:border-primary/50 bg-secondary/5 transition-colors overflow-hidden">
                                     <Video className="w-8 h-8 mb-2 text-teal-600" />
                                     <span className="text-sm font-medium">Ladda upp Film</span>
-                                    <input key={Date.now() + "vid"} type="file" accept="video/*, video/mp4, video/quicktime" className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" onChange={(e) => handleFileSelect(e, 'video')} />
+                                    <input type="file" accept="video/*, video/mp4, video/quicktime" className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" onChange={(e) => handleFileSelect(e, 'video')} />
                                 </label>
                             </div>
                         ) : (
@@ -269,10 +269,9 @@ export default function CreateCommunityPostPage() {
                         <label className="block text-sm font-medium mb-2">Beskriv din fångst</label>
                         <textarea
                             className="flex min-h-[120px] w-full rounded-md border border-input bg-background/50 px-3 py-2 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-                            placeholder="Berätta om fiskenutrustningen, vädret..."
+                            placeholder="Berätta om fisken, utrustningen, vädret..."
                             value={comment}
                             onChange={(e) => setComment(e.target.value)}
-                            required
                         />
                     </div>
 
