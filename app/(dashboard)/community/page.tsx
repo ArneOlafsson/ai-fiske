@@ -270,7 +270,9 @@ export default function CommunityPage() {
         <div className="max-w-2xl mx-auto space-y-8">
             <div className="flex flex-col md:flex-row items-center justify-between gap-4 text-center md:text-left">
                 <div>
-                    <h1 className="text-3xl font-bold">Community & Fångst</h1>
+                    <h1 className="text-3xl font-bold flex items-center justify-center md:justify-start">
+                        Community & Fångst <span className="ml-2 text-xs bg-primary text-white px-2 py-0.5 rounded-full font-mono">v1.2</span>
+                    </h1>
                     <p className="text-muted-foreground">Se vad andra fiskare har fått upp nyligen.</p>
                 </div>
                 {isPremium && (
