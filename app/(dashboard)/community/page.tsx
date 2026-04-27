@@ -167,22 +167,8 @@ export default function CommunityPage() {
             setLoading(false);
         });
 
-        // Safety Timeout for Dev Mode
-        const timeoutId = setTimeout(() => {
-            setLoading(prev => {
-                if (prev) {
-                    console.log("Timeout: Force loading Mock Data");
-                    const local = getLocalCatches();
-                    setCatches([...local, ...MOCK_CATCHES]);
-                    return false;
-                }
-                return prev;
-            });
-        }, 1500);
-
         return () => {
             unsubscribe();
-            clearTimeout(timeoutId);
         };
     }, []);
 
