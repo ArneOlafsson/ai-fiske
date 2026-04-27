@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/components/AuthProvider';
 import { Button, Input, Card } from '@/components/ui/primitives';
@@ -49,6 +49,11 @@ export default function CreateCommunityPostPage() {
                 // Compress to JPEG directly to Blob
                 canvas.toBlob(
                     (blob) => {
+                        // Aggressive memory cleanup
+                        canvas.width = 0;
+                        canvas.height = 0;
+                        img.src = '';
+                        
                         if (blob) resolve(blob);
                         else reject(new Error("Canvas toBlob failed"));
                     },
@@ -56,9 +61,21 @@ export default function CreateCommunityPostPage() {
                     0.7
                 );
             };
-            img.onerror = reject;
+            img.onerror = () => {
+                img.src = '';
+                reject(new Error("Image load failed"));
+            };
         });
     };
+
+    // Clean up Blob URLs to prevent memory leaks across uploads
+    useEffect(() => {
+        return () => {
+            if (previewUrl) {
+                URL.revokeObjectURL(previewUrl);
+            }
+        };
+    }, [previewUrl]);
 
     const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>, explicitType: 'image' | 'video') => {
         if (e.target.files && e.target.files[0]) {
