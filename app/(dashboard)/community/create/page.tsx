@@ -98,15 +98,17 @@ export default function CreateCommunityPostPage() {
         try {
             // Process Image or Video
             let uploadBlob: Blob = imageFile as Blob;
-            if (mediaType === 'image') {
-                try {
-                    if (previewUrl) {
-                        uploadBlob = await compressImageToBlob(previewUrl);
-                    }
-                } catch (err) {
-                    console.warn("Compression failed", err);
-                }
-            }
+            
+            // TEMPORARY FIX: Disable canvas compression to see if it fixes Android hangs
+            // if (mediaType === 'image') {
+            //     try {
+            //         if (previewUrl) {
+            //             uploadBlob = await compressImageToBlob(previewUrl);
+            //         }
+            //     } catch (err) {
+            //         console.warn("Compression failed", err);
+            //     }
+            // }
 
             // Upload File
             let imageUrl = '';
