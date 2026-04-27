@@ -333,7 +333,19 @@ function ProfileContent() {
                     {myCatches.map(item => (
                         <Card key={item.id} className="overflow-hidden group">
                             <div className="aspect-square relative bg-black/50">
-                                <img src={item.imageUrl} className="w-full h-full object-cover" alt="Catch" />
+                                {item.mediaType === 'video' ? (
+                                    <video 
+                                        src={item.imageUrl} 
+                                        className="w-full h-full object-cover" 
+                                        playsInline 
+                                        muted 
+                                        loop 
+                                        controls
+                                        preload="metadata"
+                                    />
+                                ) : (
+                                    <img src={item.imageUrl} className="w-full h-full object-cover" alt="Catch" />
+                                )}
                                 <div className="absolute top-2 right-2 flex gap-2">
                                     <Button
                                         size="sm" variant="secondary" className="h-8 w-8 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
