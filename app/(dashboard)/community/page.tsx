@@ -304,12 +304,26 @@ export default function CommunityPage() {
                                         playsInline
                                         preload="metadata"
                                         className="w-full h-full object-cover"
+                                        onError={(e) => {
+                                            const target = e.target as HTMLVideoElement;
+                                            target.style.display = 'none';
+                                            const parent = target.parentElement;
+                                            if (parent) {
+                                                const fallback = document.createElement('div');
+                                                fallback.className = 'w-full h-full flex flex-col items-center justify-center text-center p-4 bg-secondary/10';
+                                                fallback.innerHTML = '<span class="text-3xl mb-2">⚠️</span><p class="text-sm font-bold text-muted-foreground">Din enhet kan inte spela upp denna video.</p><p class="text-xs text-muted-foreground mt-1">Filmen sparades i ett format (t.ex. iPhone HEVC) som webbläsaren inte stöder.</p>';
+                                                parent.appendChild(fallback);
+                                            }
+                                        }}
                                     />
                                 ) : (
                                     <img
                                         src={item.imageUrl}
                                         alt={item.aiResult?.fishNameSv || "Fångst"}
                                         className="w-full h-full object-cover"
+                                        onError={(e) => {
+                                            (e.target as HTMLImageElement).src = 'https://via.placeholder.com/400?text=Bild+kunde+inte+laddas';
+                                        }}
                                     />
                                 )}
                                 <div className="absolute top-4 right-4 bg-black/60 text-white px-3 py-1 rounded-full text-sm font-bold backdrop-blur-md">
