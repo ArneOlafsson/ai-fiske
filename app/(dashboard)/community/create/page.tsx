@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/components/AuthProvider';
 import { Button, Input, Card } from '@/components/ui/primitives';
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { ref, uploadBytes, getDownloadURL, uploadBytesResumable } from 'firebase/storage';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { db, storage } from '@/lib/firebase';
 import { Loader2, Upload, ArrowLeft, Camera, Video } from 'lucide-react';
@@ -108,8 +108,6 @@ export default function CreateCommunityPostPage() {
                     contentType: mediaType === 'video' ? (imageFile.type || 'video/mp4') : 'image/jpeg',
                 };
                 
-                // Use uploadBytesResumable for progress tracking (crucial for large videos)
-                const { uploadBytesResumable } = await import('firebase/storage');
                 const uploadTask = uploadBytesResumable(storageRef, uploadBlob, metadata);
 
                 imageUrl = await new Promise((resolve, reject) => {
