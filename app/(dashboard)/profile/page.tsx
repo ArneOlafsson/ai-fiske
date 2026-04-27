@@ -90,13 +90,16 @@ function ProfileContent() {
         return () => unsub();
     }, [user]);
 
-    const handleForceReload = () => {
+    const handleForceReload = async () => {
         if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.getRegistrations().then(function(registrations) {
-                for(let registration of registrations) {
-                    registration.unregister();
+            try {
+                const registrations = await navigator.serviceWorker.getRegistrations();
+                for (let registration of registrations) {
+                    await registration.unregister();
                 }
-            });
+            } catch (err) {
+                console.warn('SW unregister failed', err);
+            }
         }
         window.location.reload();
     };
