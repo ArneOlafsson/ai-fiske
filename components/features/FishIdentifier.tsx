@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Button, Input, Card } from '@/components/ui/primitives';
 import { Camera, Upload, Loader2, CheckCircle, AlertCircle, Utensils, MapPin } from 'lucide-react';
 import Image from 'next/image';
@@ -10,6 +10,7 @@ import { collection, addDoc, serverTimestamp, doc, updateDoc, increment, setDoc 
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { db, storage } from '@/lib/firebase';
 import { useRouter } from 'next/navigation';
+import heic2any from 'heic2any';
 
 export default function FishIdentifier() {
     const { profile, user } = useAuth();
@@ -28,13 +29,53 @@ export default function FishIdentifier() {
 
     const router = useRouter();
 
-    const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const [isConverting, setIsConverting] = useState(false);
+    
+    // Keep track of all created blob URLs to revoke them only on unmount
+    // This prevents Safari from reusing the same Blob UUID for consecutive images
+    const blobUrlCache = useRef<string[]>([]);
+    
+    useEffect(() => {
+        return () => {
+            blobUrlCache.current.forEach(url => URL.revokeObjectURL(url));
+        };
+    }, []);
+
+    const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files[0]) {
-            const file = e.target.files[0];
+            let file = e.target.files[0];
+            
+            const isHeic = file.type === 'image/heic' || file.type === 'image/heif' || 
+                           file.name.toLowerCase().endsWith('.heic') || file.name.toLowerCase().endsWith('.heif');
+            
+            if (isHeic) {
+                setIsConverting(true);
+                try {
+                    const convertedBlob = await heic2any({
+                        blob: file,
+                        toType: "image/jpeg",
+                        quality: 0.8
+                    }) as Blob;
+                    
+                    file = new File([convertedBlob], file.name.replace(/\.heic$|\.heif$/i, '.jpg'), { type: 'image/jpeg' });
+                } catch (error) {
+                    console.error("HEIC conversion failed:", error);
+                    alert("Kunde inte konvertera HEIC-bilden. Prova att välja en annan bild.");
+                    setIsConverting(false);
+                    return; // Stop processing
+                }
+                setIsConverting(false);
+            }
+            
             setImageFile(file);
-            setPreviewUrl(URL.createObjectURL(file));
+            
+            const newUrl = URL.createObjectURL(file);
+            blobUrlCache.current.push(newUrl);
+            setPreviewUrl(newUrl);
+
             setUploadedUrl(null);
             setResult(null); // Reset result
+            setSaved(false); // Reset saved status
         }
     };
 
@@ -75,15 +116,7 @@ export default function FishIdentifier() {
 
             if (storage && user.uid) {
                 try {
-                    // Convert to compressed JPEG (fixes HEIC bugs on iOS and reduces size)
                     let uploadBlob: Blob = imageFile as Blob;
-                    try {
-                        if (previewUrl) {
-                            uploadBlob = await compressImageToBlob(previewUrl);
-                        }
-                    } catch (resizeErr) {
-                        console.warn("Kunde inte komprimera bilden, använder original", resizeErr);
-                    }
 
                     const storageRef = ref(storage, `catches/${user.uid}/${Date.now()}_capture.jpg`);
                     const uploadRes = await uploadBytes(storageRef, uploadBlob);
@@ -99,15 +132,10 @@ export default function FishIdentifier() {
             // 2. Call API
             let apiImageUrl = downloadUrl;
 
-            // If URL is local blob (Storage upload failed), convert to Base64 for API
+            // If URL is local blob (Storage upload failed), we cannot easily convert it without risking memory crashes on iOS.
+            // In a real app we'd use form data, but here we just pass the URL or throw.
             if (downloadUrl.startsWith('blob:')) {
-                console.log("Converting blob to base64 for API...");
-                try {
-                    apiImageUrl = await blobToBase64(downloadUrl);
-                } catch (b64Error) {
-                    console.error("Failed to convert blob for API", b64Error);
-                    throw new Error("Kunde inte bearbeta bilden.");
-                }
+                throw new Error("Måste ladda upp till molnet först. Kontrollera anslutningen.");
             }
 
             const response = await fetch('/api/identify', {
@@ -153,66 +181,7 @@ export default function FishIdentifier() {
         console.log("Force Reset Loading State");
     }, []);
 
-    // Helper to convert Blob URL to Base64 with Resizing
-    const blobToBase64 = async (blobUrl: string): Promise<string> => {
-        return new Promise((resolve, reject) => {
-            const img = new window.Image();
-            img.src = blobUrl;
-            img.onload = () => {
-                const canvas = document.createElement('canvas');
-                const MAX_WIDTH = 800; // Resize to max 800px width to check 1MB limit
-                const scale = MAX_WIDTH / img.width;
-                const width = scale < 1 ? MAX_WIDTH : img.width;
-                const height = scale < 1 ? img.height * scale : img.height;
 
-                canvas.width = width;
-                canvas.height = height;
-                const ctx = canvas.getContext('2d');
-                if (!ctx) {
-                    reject(new Error("Canvas context failed"));
-                    return;
-                }
-                ctx.drawImage(img, 0, 0, width, height);
-                // Compress to JPEG 0.7
-                resolve(canvas.toDataURL('image/jpeg', 0.7));
-            };
-            img.onerror = reject;
-        });
-    };
-
-    // Helper to compress directly to Blob (avoids fetch memory crashes on iOS)
-    const compressImageToBlob = async (blobUrl: string): Promise<Blob> => {
-        return new Promise((resolve, reject) => {
-            const img = new window.Image();
-            img.src = blobUrl;
-            img.onload = () => {
-                const canvas = document.createElement('canvas');
-                const MAX_WIDTH = 800;
-                const scale = MAX_WIDTH / img.width;
-                const width = scale < 1 ? MAX_WIDTH : img.width;
-                const height = scale < 1 ? img.height * scale : img.height;
-
-                canvas.width = width;
-                canvas.height = height;
-                const ctx = canvas.getContext('2d');
-                if (!ctx) {
-                    reject(new Error("Canvas context failed"));
-                    return;
-                }
-                ctx.drawImage(img, 0, 0, width, height);
-                
-                canvas.toBlob(
-                    (blob) => {
-                        if (blob) resolve(blob);
-                        else reject(new Error("Canvas toBlob failed"));
-                    },
-                    'image/jpeg',
-                    0.7
-                );
-            };
-            img.onerror = reject;
-        });
-    };
 
     const handleSaveCatch = async () => {
         if (!user) return;
@@ -233,14 +202,7 @@ export default function FishIdentifier() {
             let finalImageUrl = uploadedUrl;
 
             if (!finalImageUrl && previewUrl) {
-                console.log("No storage URL, converting to Base64...");
-                try {
-                    // Compress/Resize logic could go here, but for MVP simple Base64
-                    finalImageUrl = await blobToBase64(previewUrl);
-                } catch (e) {
-                    console.error("Base64 conversion failed", e);
-                    finalImageUrl = previewUrl; // Last resort (only works locally)
-                }
+                finalImageUrl = previewUrl; // Last resort (only works locally)
             }
 
             // Prepare data
@@ -308,7 +270,12 @@ export default function FishIdentifier() {
 
                     <div className="mb-6">
                         <label className="relative block w-full aspect-video border-2 border-dashed border-border rounded-xl flex flex-col items-center justify-center cursor-pointer hover:border-primary/50 transition-colors bg-secondary/5 overflow-hidden">
-                            {previewUrl ? (
+                            {isConverting ? (
+                                <div className="text-center p-4 relative z-10 pointer-events-none">
+                                    <Loader2 className="w-12 h-12 mx-auto mb-2 text-primary animate-spin" />
+                                    <p className="text-muted-foreground">Bearbetar bild (HEIC)...</p>
+                                </div>
+                            ) : previewUrl ? (
                                 <div className="relative w-full h-full">
                                     <img src={previewUrl} alt="Preview" className="w-full h-full object-cover rounded-lg" />
                                     <div className="absolute inset-0 bg-black/20 hover:bg-black/40 transition-colors flex items-center justify-center">
@@ -321,7 +288,7 @@ export default function FishIdentifier() {
                                     <p className="text-muted-foreground">Klicka för att ta foto eller välja bild</p>
                                 </div>
                             )}
-                            <input key={previewUrl ? 'has-preview' : 'no-preview'} type="file" accept="image/jpeg, image/png, image/webp, image/heic, image/heif" className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-20" onChange={handleFileSelect} />
+                            <input key={previewUrl ? 'has-preview' : 'no-preview'} type="file" accept="image/*" className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-20" onChange={handleFileSelect} />
                         </label>
                     </div>
 
@@ -334,7 +301,7 @@ export default function FishIdentifier() {
                     <Button
                         className="w-full"
                         size="lg"
-                        disabled={!imageFile || loading}
+                        disabled={!imageFile || loading || isConverting}
                         onClick={handleIdentify}
                     >
                         {loading ? (

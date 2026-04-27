@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/components/AuthProvider';
 import { Button, Input, Card } from '@/components/ui/primitives';
@@ -9,6 +9,7 @@ import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { db, storage } from '@/lib/firebase';
 import { Loader2, Upload, ArrowLeft, Camera, Video } from 'lucide-react';
 import Link from 'next/link';
+import heic2any from 'heic2any';
 
 export default function CreateCommunityPostPage() {
     const { user, profile, loading } = useAuth();
@@ -22,68 +23,78 @@ export default function CreateCommunityPostPage() {
     const [previewUrl, setPreviewUrl] = useState<string | null>(null);
     const [mediaType, setMediaType] = useState<'image' | 'video'>('image');
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [isConverting, setIsConverting] = useState(false);
     const [uploadProgress, setUploadProgress] = useState(0);
+    const [inputKey, setInputKey] = useState(Date.now());
+    
+    // Keep track of all created blob URLs to revoke them only on unmount
+    // This prevents Safari from reusing the same Blob UUID for consecutive images
+    const blobUrlCache = useRef<string[]>([]);
 
     if (loading) return null;
 
-    // Helper to compress image efficiently without large Base64 strings
-    const compressImageToBlob = async (blobUrl: string): Promise<Blob> => {
-        return new Promise((resolve, reject) => {
-            const img = new window.Image();
-            img.src = blobUrl;
-            img.onload = () => {
-                const canvas = document.createElement('canvas');
-                const MAX_WIDTH = 800; // Resize to max 800px width
-                const scale = MAX_WIDTH / img.width;
-                const width = scale < 1 ? MAX_WIDTH : img.width;
-                const height = scale < 1 ? img.height * scale : img.height;
+    // No longer using client-side canvas compression due to severe memory limitations and hangs on iOS Safari.
 
-                canvas.width = width;
-                canvas.height = height;
-                const ctx = canvas.getContext('2d');
-                if (!ctx) {
-                    reject(new Error("Canvas context failed"));
-                    return;
-                }
-                ctx.drawImage(img, 0, 0, width, height);
-                // Compress to JPEG directly to Blob
-                canvas.toBlob(
-                    (blob) => {
-                        // Aggressive memory cleanup
-                        canvas.width = 0;
-                        canvas.height = 0;
-                        img.src = '';
-                        
-                        if (blob) resolve(blob);
-                        else reject(new Error("Canvas toBlob failed"));
-                    },
-                    'image/jpeg',
-                    0.7
-                );
-            };
-            img.onerror = () => {
-                img.src = '';
-                reject(new Error("Image load failed"));
-            };
-        });
-    };
-
-    // Clean up Blob URLs to prevent memory leaks across uploads
+    // Clean up Blob URLs ONLY on unmount to prevent Safari UUID reuse bugs
     useEffect(() => {
         return () => {
-            if (previewUrl) {
-                URL.revokeObjectURL(previewUrl);
-            }
+            blobUrlCache.current.forEach(url => URL.revokeObjectURL(url));
         };
-    }, [previewUrl]);
+    }, []);
 
-    const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>, explicitType: 'image' | 'video') => {
+    const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>, explicitType: 'image' | 'video') => {
         if (e.target.files && e.target.files[0]) {
-            const file = e.target.files[0];
+            let file: File = e.target.files[0];
+            
+            let actualMediaType = explicitType;
+            if (file.type.startsWith('video/')) {
+                actualMediaType = 'video';
+            } else if (file.type.startsWith('image/')) {
+                actualMediaType = 'image';
+            } else if (file.name.toLowerCase().endsWith('.heic') || file.name.toLowerCase().endsWith('.heif')) {
+                actualMediaType = 'image';
+            }
+            
+            if (actualMediaType === 'image') {
+                const isHeic = file.type === 'image/heic' || file.type === 'image/heif' || 
+                               file.name.toLowerCase().endsWith('.heic') || file.name.toLowerCase().endsWith('.heif');
+                
+                if (isHeic) {
+                    setIsConverting(true);
+                    try {
+                        const convertedBlob = await heic2any({
+                            blob: file,
+                            toType: "image/jpeg",
+                            quality: 0.8
+                        }) as Blob;
+                        
+                        file = new File([convertedBlob], file.name.replace(/\.heic$|\.heif$/i, '.jpg'), { type: 'image/jpeg' });
+                    } catch (error) {
+                        console.error("HEIC conversion failed:", error);
+                        alert("Kunde inte konvertera HEIC-bilden. Prova att välja en annan bild.");
+                        setIsConverting(false);
+                        return; // Stop processing
+                    }
+                    setIsConverting(false);
+                }
+            }
+            
             setImageFile(file);
-            setPreviewUrl(URL.createObjectURL(file));
-            setMediaType(explicitType);
+            setMediaType(actualMediaType);
+            
+            let newUrl = URL.createObjectURL(file);
+            blobUrlCache.current.push(newUrl);
+            setPreviewUrl(newUrl);
         }
+    };
+
+    const handleClearSelection = () => {
+        if (previewUrl) {
+            URL.revokeObjectURL(previewUrl);
+        }
+        setPreviewUrl(null);
+        setImageFile(null);
+        setInputKey(Date.now()); // Destroy and recreate the input DOM element
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -98,17 +109,6 @@ export default function CreateCommunityPostPage() {
         try {
             // Process Image or Video
             let uploadBlob: Blob = imageFile as Blob;
-            
-            // TEMPORARY FIX: Disable canvas compression to see if it fixes Android hangs
-            // if (mediaType === 'image') {
-            //     try {
-            //         if (previewUrl) {
-            //             uploadBlob = await compressImageToBlob(previewUrl);
-            //         }
-            //     } catch (err) {
-            //         console.warn("Compression failed", err);
-            //     }
-            // }
 
             // Upload File
             let imageUrl = '';
@@ -149,7 +149,7 @@ export default function CreateCommunityPostPage() {
             }
 
             // Save Post to catches collection
-            await addDoc(collection(db, 'catches'), {
+            const docRef = await addDoc(collection(db, 'catches'), {
                 ownerUid: user?.uid,
                 ownerName: profile?.displayName || user?.email || 'Anonym',
                 imageUrl,
@@ -160,7 +160,7 @@ export default function CreateCommunityPostPage() {
                 isPublic: true,
                 likesCount: 0,
                 commentsCount: 0,
-                createdAt: serverTimestamp(),
+                createdAt: Date.now(),
                 aiResult: {
                     fishNameSv: species || 'Fångst',
                     fishNameLatin: 'Manuell inmatning',
@@ -175,16 +175,35 @@ export default function CreateCommunityPostPage() {
                 }
             });
 
+            // Fallback: save directly to local_catches so it's guaranteed to be in the feed
+            try {
+                const localCatch = {
+                    id: docRef.id,
+                    ownerUid: user?.uid,
+                    ownerName: profile?.displayName || user?.email || 'Anonym',
+                    imageUrl,
+                    mediaType,
+                    locationText,
+                    waterType,
+                    comment,
+                    isPublic: true,
+                    likesCount: 0,
+                    commentsCount: 0,
+                    createdAt: Date.now()
+                };
+                const existing = JSON.parse(localStorage.getItem('local_catches') || '[]');
+                localStorage.setItem('local_catches', JSON.stringify([localCatch, ...existing].slice(0, 50)));
+            } catch (e) {
+                console.warn("Could not save to local_catches", e);
+            }
+
             // Reset state
             setSpecies('');
             setLocationText('');
             setWaterType('sjö');
             setComment('');
-            setImageFile(null);
-            setPreviewUrl(null);
-
-            alert("Fångst uppladdad till Community!");
-            window.location.href = '/community';
+            // Navigate to feed
+            router.push('/community');
         } catch (error: any) {
             console.error("Error creating post:", error);
             alert("Kunde inte lägga upp: " + error.message);
@@ -219,30 +238,49 @@ export default function CreateCommunityPostPage() {
                                 <label className="relative flex flex-col items-center justify-center p-6 border-2 border-dashed border-border rounded-xl cursor-pointer hover:border-primary/50 bg-secondary/5 transition-colors overflow-hidden">
                                     <Camera className="w-8 h-8 mb-2 text-teal-600" />
                                     <span className="text-sm font-medium">Ladda upp Bild</span>
-                                    <input type="file" accept="image/jpeg, image/png, image/webp" className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" onChange={(e) => handleFileSelect(e, 'image')} />
+                                    <input key={`img-${inputKey}`} type="file" accept="image/*" className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" onChange={(e) => handleFileSelect(e, 'image')} />
                                 </label>
                                 <label className="relative flex flex-col items-center justify-center p-6 border-2 border-dashed border-border rounded-xl cursor-pointer hover:border-primary/50 bg-secondary/5 transition-colors overflow-hidden">
                                     <Video className="w-8 h-8 mb-2 text-teal-600" />
                                     <span className="text-sm font-medium">Ladda upp Film</span>
-                                    <input type="file" accept="video/mp4, video/webm" className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" onChange={(e) => handleFileSelect(e, 'video')} />
+                                    <input key={`vid-${inputKey}`} type="file" accept="video/*" className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" onChange={(e) => handleFileSelect(e, 'video')} />
                                 </label>
+                            </div>
+                        ) : isConverting ? (
+                            <div className="w-full aspect-video flex flex-col items-center justify-center rounded-xl border-2 border-border bg-secondary/10">
+                                <Loader2 className="w-10 h-10 animate-spin text-primary mb-2" />
+                                <p className="text-sm font-medium text-muted-foreground">Bearbetar bild (HEIC)...</p>
                             </div>
                         ) : (
                             <div className="w-full aspect-video relative rounded-xl overflow-hidden border-2 border-border shadow-sm">
                                 {mediaType === 'video' ? (
-                                    <video src={previewUrl} controls playsInline preload="metadata" className="absolute inset-0 w-full h-full object-cover bg-black" />
+                                    <video 
+                                        src={previewUrl} 
+                                        controls 
+                                        playsInline 
+                                        preload="metadata" 
+                                        className="absolute inset-0 w-full h-full object-cover bg-black" 
+                                        onError={(e) => console.error("Video preview error", e)}
+                                    />
                                 ) : (
-                                    <img src={previewUrl} alt="Preview" className="absolute inset-0 w-full h-full object-cover bg-secondary/10" />
+                                    <img 
+                                        src={previewUrl} 
+                                        alt="Preview" 
+                                        className="absolute inset-0 w-full h-full object-cover bg-secondary/10" 
+                                        onError={(e) => {
+                                            console.error("Image preview error", e);
+                                            // Fallback text if image cannot be rendered
+                                            e.currentTarget.style.display = 'none';
+                                            e.currentTarget.parentElement?.insertAdjacentHTML('beforeend', '<div class="absolute inset-0 flex items-center justify-center text-sm text-center p-4 bg-secondary/20">Bilden är vald, men kan inte förhandsgranskas (okänt format).</div>');
+                                        }}
+                                    />
                                 )}
                                 <Button 
                                     type="button" 
                                     variant="destructive" 
                                     size="sm" 
                                     className="absolute top-2 right-2 bg-red-600/90 hover:bg-red-700 text-white"
-                                    onClick={() => {
-                                        setPreviewUrl(null);
-                                        setImageFile(null);
-                                    }}
+                                    onClick={handleClearSelection}
                                 >
                                     Ta bort
                                 </Button>
@@ -292,7 +330,7 @@ export default function CreateCommunityPostPage() {
                         />
                     </div>
 
-                    <Button type="submit" className="w-full relative overflow-hidden" size="lg" disabled={isSubmitting}>
+                    <Button type="submit" className="w-full relative overflow-hidden" size="lg" disabled={isSubmitting || isConverting || !imageFile}>
                         {isSubmitting && (
                             <div 
                                 className="absolute left-0 top-0 bottom-0 bg-black/20 transition-all duration-300" 
