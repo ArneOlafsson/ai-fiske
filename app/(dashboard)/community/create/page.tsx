@@ -46,6 +46,14 @@ export default function CreateCommunityPostPage() {
         if (e.target.files && e.target.files[0]) {
             let file: File = e.target.files[0];
             
+            const isVideo = file.type.startsWith('video/');
+            const maxSize = isVideo ? 50 * 1024 * 1024 : 20 * 1024 * 1024; // 50MB video, 20MB image
+            
+            if (file.size > maxSize) {
+                alert(`Filen är för stor. Maxstorlek är ${isVideo ? '50MB för film' : '20MB för bild'}. Din fil är ${(file.size / (1024*1024)).toFixed(1)}MB.`);
+                return;
+            }
+            
             let actualMediaType = explicitType;
             if (file.type.startsWith('video/')) {
                 actualMediaType = 'video';
