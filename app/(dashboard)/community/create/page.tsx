@@ -67,6 +67,8 @@ export default function CreateCommunityPostPage() {
             setPreviewUrl(URL.createObjectURL(file));
             setMediaType(explicitType);
         }
+        // Force reset the input value so the exact same file can be selected again without the browser blocking it
+        e.target.value = '';
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -269,10 +271,9 @@ export default function CreateCommunityPostPage() {
                         <label className="block text-sm font-medium mb-2">Beskriv din fångst</label>
                         <textarea
                             className="flex min-h-[120px] w-full rounded-md border border-input bg-background/50 px-3 py-2 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-                            placeholder="Berätta om fiskenutrustningen, vädret..."
+                            placeholder="Berätta om fisken, utrustningen, vädret..."
                             value={comment}
                             onChange={(e) => setComment(e.target.value)}
-                            required
                         />
                     </div>
 

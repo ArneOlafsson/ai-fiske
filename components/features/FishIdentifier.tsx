@@ -36,6 +36,7 @@ export default function FishIdentifier() {
             setUploadedUrl(null);
             setResult(null); // Reset result
         }
+        e.target.value = '';
     };
 
     const handleIdentify = async () => {
