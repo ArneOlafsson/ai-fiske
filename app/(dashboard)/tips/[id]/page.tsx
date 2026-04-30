@@ -215,7 +215,11 @@ export default function PostDetailPage({ params }: { params: Promise<{ id: strin
 
                 {post.imageUrl && (
                     <div className="aspect-square relative rounded-2xl overflow-hidden shadow-lg border border-border/50">
-                        <img src={post.imageUrl} alt={post.title} className="w-full h-full object-cover" />
+                        {post.mediaType === 'video' ? (
+                            <video src={post.imageUrl} controls playsInline className="w-full h-full object-cover bg-black" />
+                        ) : (
+                            <img src={post.imageUrl} alt={post.title} className="w-full h-full object-cover" />
+                        )}
                     </div>
                 )}
 

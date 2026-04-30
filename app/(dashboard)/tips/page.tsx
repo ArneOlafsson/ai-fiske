@@ -15,6 +15,7 @@ interface Post {
     title: string;
     content: string;
     imageUrl: string;
+    mediaType?: string;
     authorName: string;
     createdAt: any;
     commentsCount?: number;
@@ -83,11 +84,21 @@ export default function TipsPage() {
                             <Card className="h-full overflow-hidden hover:shadow-lg transition-all duration-300 border-border/50 group-hover:-translate-y-1">
                                 <div className="aspect-square relative overflow-hidden bg-secondary/10">
                                     {post.imageUrl ? (
-                                        <img
-                                            src={post.imageUrl}
-                                            alt={post.title}
-                                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                                        />
+                                        post.mediaType === 'video' ? (
+                                            <video
+                                                src={post.imageUrl}
+                                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 bg-black"
+                                                preload="metadata"
+                                                muted
+                                                playsInline
+                                            />
+                                        ) : (
+                                            <img
+                                                src={post.imageUrl}
+                                                alt={post.title}
+                                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                                            />
+                                        )
                                     ) : (
                                         <div className="w-full h-full flex items-center justify-center bg-secondary/20">
                                             <span className="text-muted-foreground">Ingen bild</span>
