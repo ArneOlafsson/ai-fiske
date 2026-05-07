@@ -79,6 +79,15 @@ export default function Dashboard() {
                 />
 
                 <FeatureCard 
+                    href="/fredningsomraden"
+                    title="Fredningsområden"
+                    desc="Se fiskeregler och var det råder fiskeförbud på Länsstyrelsens officiella karta."
+                    badge="Regler & Karta"
+                    icon={<MapPin className="w-5 h-5 text-white/70" />}
+                    accentColor="#ef4444" 
+                />
+
+                <FeatureCard 
                     href="/weather"
                     title="Väder & Lufttryck"
                     desc="Lokala prognoser optimerade för fiske."
