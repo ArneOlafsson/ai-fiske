@@ -124,14 +124,22 @@ export default function Dashboard() {
                 />
             </div>
             
-             <div className="mt-8 pt-6 border-t border-[#1E3A54]">
+             <div className="mt-8 pt-6 border-t border-[#1E3A54] space-y-4">
                 <h2 className="text-muted-foreground font-bold text-xs tracking-widest uppercase mb-4">Erbjudanden</h2>
+                <SponsorCard
+                    title="Fiskedags.se"
+                    desc="Allt för ditt fiske! Stort sortiment av spön, rullar, beten och tillbehör för alla fiskemetoder – både online och i butik."
+                    image="/ads/fiskedags.png"
+                    cta="Gå till butik"
+                    href="https://www.fiskedags.se/"
+                />
                 <SponsorCard
                     title="Animal Deli"
                     desc="Naturligt hundgodis för din bästa fiskekompis. Perfekt i båten! Kod BERTLID1 ger 50%."
                     image="/ads/animal-deli.png"
                     cta="Gå till butik"
                     href="https://animaldeli.com/"
+                    invertLogo
                 />
              </div>
         </div>
@@ -168,7 +176,7 @@ function FeatureCard({ href, title, desc, icon, badge, accentColor }: any) {
     );
 }
 
-function SponsorCard({ title, desc, image, cta, href }: any) {
+function SponsorCard({ title, desc, image, cta, href, invertLogo = false }: any) {
     return (
         <a href={href} target="_blank" rel="noopener noreferrer" className="block group">
             <div className="bg-[#132738] rounded-2xl p-6 relative overflow-hidden transition-all duration-300 hover:scale-[1.01] hover:bg-[#1a334a] border border-[#1E3A54]">
@@ -178,11 +186,11 @@ function SponsorCard({ title, desc, image, cta, href }: any) {
 
                 <div className="flex flex-col h-full justify-between">
                     <div>
-                        <div className="mb-6 h-10 flex items-center bg-white/10 rounded p-2 w-fit">
+                        <div className="mb-5 h-11 flex items-center bg-white/10 rounded-xl px-3 py-1.5 w-fit">
                             <img
                                 src={image}
                                 alt={title}
-                                className="h-full object-contain opacity-90 group-hover:opacity-100 transition-opacity filter brightness-0 invert"
+                                className={`h-full object-contain opacity-90 group-hover:opacity-100 transition-opacity ${invertLogo ? 'filter brightness-0 invert' : ''}`}
                                 onError={(e: any) => {
                                     e.target.style.display = 'none';
                                     const fallback = document.createElement('div');
