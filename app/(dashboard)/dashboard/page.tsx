@@ -128,7 +128,7 @@ export default function Dashboard() {
                 <h2 className="text-muted-foreground font-bold text-xs tracking-widest uppercase mb-4">Erbjudanden</h2>
                 <SponsorCard
                     title="Fiskedags.se"
-                    desc="Allt för ditt fiske! Stort sortiment av spön, rullar, beten och tillbehör för alla fiskemetoder – både online och i butik."
+                    desc="Allt för ditt fiske! Stort sortiment av spön, rullar, beten och tillbehör för alla fiskemetoder – både online och i butik. Kod Bertlid10 ger 10% rabatt."
                     image="/ads/fiskedags.png"
                     cta="Gå till butik"
                     href="https://www.fiskedags.se/"
