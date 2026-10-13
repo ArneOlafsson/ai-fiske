@@ -4,11 +4,12 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/components/AuthProvider';
 import { Button, Input, Card } from '@/components/ui/primitives';
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { ref } from 'firebase/storage';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { db, storage } from '@/lib/firebase';
 import { Loader2, Upload, AlertCircle, ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
+import { optimizeImageForUpload, uploadToStorageWithRetry, formatStorageErrorMessage } from '@/lib/media-upload';
 
 export default function CreateEquipmentPage() {
     const { user, profile, loading } = useAuth();
@@ -19,6 +20,8 @@ export default function CreateEquipmentPage() {
     const [imageFile, setImageFile] = useState<File | null>(null);
     const [previewUrl, setPreviewUrl] = useState<string | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [isConverting, setIsConverting] = useState(false);
+    const [uploadProgress, setUploadProgress] = useState(0);
 
     if (loading) return null;
 
@@ -38,9 +41,17 @@ export default function CreateEquipmentPage() {
         );
     }
 
-    const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files[0]) {
-            const file = e.target.files[0];
+            let file = e.target.files[0];
+            setIsConverting(true);
+            try {
+                file = await optimizeImageForUpload(file, { maxWidthOrHeight: 1600, maxSizeMB: 0.9, quality: 0.85 });
+            } catch (err) {
+                console.warn("Optimization failed, using original", err);
+            } finally {
+                setIsConverting(false);
+            }
             setImageFile(file);
             setPreviewUrl(URL.createObjectURL(file));
         }
@@ -54,14 +65,20 @@ export default function CreateEquipmentPage() {
         }
 
         setIsSubmitting(true);
+        setUploadProgress(0);
 
         try {
             // 1. Upload Image
             let imageUrl = '';
             if (storage && user) {
-                const storageRef = ref(storage, `equipment/${user.uid}/${Date.now()}_${imageFile.name}`);
-                const uploadRes = await uploadBytes(storageRef, imageFile);
-                imageUrl = await getDownloadURL(uploadRes.ref);
+                const storageRef = ref(storage, `equipment/${user.uid}/${Date.now()}_${imageFile.name || 'image.jpg'}`);
+                imageUrl = await uploadToStorageWithRetry(
+                    storageRef,
+                    imageFile,
+                    { contentType: imageFile.type || 'image/jpeg' },
+                    (progress) => setUploadProgress(progress),
+                    3
+                );
             }
 
             // 2. Save Equipment
@@ -80,9 +97,11 @@ export default function CreateEquipmentPage() {
             router.push('/equipment');
         } catch (error: any) {
             console.error("Error creating post:", error);
-            alert("Kunde inte skapa inlägg: " + error.message);
+            const userMsg = formatStorageErrorMessage(error);
+            alert("Kunde inte skapa inlägg: " + userMsg);
         } finally {
             setIsSubmitting(false);
+            setUploadProgress(0);
         }
     };
 
@@ -120,7 +139,12 @@ export default function CreateEquipmentPage() {
                                 onChange={handleFileSelect}
                                 className="absolute inset-0 opacity-0 cursor-pointer z-10"
                             />
-                            {previewUrl ? (
+                            {isConverting ? (
+                                <div className="text-center p-4">
+                                    <Loader2 className="w-8 h-8 mx-auto mb-2 text-primary animate-spin" />
+                                    <p className="text-sm text-muted-foreground">Optimerar bild...</p>
+                                </div>
+                            ) : previewUrl ? (
                                 <img src={previewUrl} alt="Preview" className="absolute inset-0 w-full h-full object-cover" />
                             ) : (
                                 <div className="text-muted-foreground">
@@ -142,9 +166,9 @@ export default function CreateEquipmentPage() {
                         />
                     </div>
 
-                    <Button type="submit" className="w-full bg-teal-600 hover:bg-teal-700 text-white" size="lg" disabled={isSubmitting}>
+                    <Button type="submit" className="w-full bg-teal-600 hover:bg-teal-700 text-white" size="lg" disabled={isSubmitting || isConverting}>
                         {isSubmitting ? (
-                            <><Loader2 className="animate-spin mr-2" /> Publicerar...</>
+                            <><Loader2 className="animate-spin mr-2" /> Publicerar ({uploadProgress}%)...</>
                         ) : (
                             'Publicera Inlägg'
                         )}

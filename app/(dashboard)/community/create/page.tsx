@@ -4,12 +4,12 @@ import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/components/AuthProvider';
 import { Button, Input, Card } from '@/components/ui/primitives';
-import { ref, uploadBytes, getDownloadURL, uploadBytesResumable } from 'firebase/storage';
-import { collection, addDoc, serverTimestamp, Timestamp } from 'firebase/firestore';
+import { ref } from 'firebase/storage';
+import { collection, addDoc, Timestamp } from 'firebase/firestore';
 import { db, storage } from '@/lib/firebase';
 import { Loader2, Upload, ArrowLeft, Camera, Video } from 'lucide-react';
 import Link from 'next/link';
-import heic2any from 'heic2any';
+import { optimizeImageForUpload, uploadToStorageWithRetry, formatStorageErrorMessage } from '@/lib/media-upload';
 
 export default function CreateCommunityPostPage() {
     const { user, profile, loading } = useAuth();
@@ -24,6 +24,7 @@ export default function CreateCommunityPostPage() {
     const [mediaType, setMediaType] = useState<'image' | 'video'>('image');
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [isConverting, setIsConverting] = useState(false);
+    const [conversionStatus, setConversionStatus] = useState('Optimerar bild...');
     const [uploadProgress, setUploadProgress] = useState(0);
     const [inputKey, setInputKey] = useState(Date.now());
     
@@ -32,8 +33,6 @@ export default function CreateCommunityPostPage() {
     const blobUrlCache = useRef<string[]>([]);
 
     if (loading) return null;
-
-    // No longer using client-side canvas compression due to severe memory limitations and hangs on iOS Safari.
 
     // Clean up Blob URLs ONLY on unmount to prevent Safari UUID reuse bugs
     useEffect(() => {
@@ -47,10 +46,10 @@ export default function CreateCommunityPostPage() {
             let file: File = e.target.files[0];
             
             const isVideo = file.type.startsWith('video/');
-            const maxSize = isVideo ? 300 * 1024 * 1024 : 20 * 1024 * 1024; // 300MB video, 20MB image
+            const maxSize = isVideo ? 300 * 1024 * 1024 : 30 * 1024 * 1024; // 300MB video, 30MB initial camera file
             
             if (file.size > maxSize) {
-                alert(`Filen är för stor. Maxstorlek är ${isVideo ? '300MB för film' : '20MB för bild'}. Din fil är ${(file.size / (1024*1024)).toFixed(1)}MB.`);
+                alert(`Filen är för stor. Maxstorlek är ${isVideo ? '300MB för film' : '30MB för bild'}. Din fil är ${(file.size / (1024*1024)).toFixed(1)}MB.`);
                 return;
             }
             
@@ -64,25 +63,16 @@ export default function CreateCommunityPostPage() {
             }
             
             if (actualMediaType === 'image') {
-                const isHeic = file.type === 'image/heic' || file.type === 'image/heif' || 
-                               file.name.toLowerCase().endsWith('.heic') || file.name.toLowerCase().endsWith('.heif');
-                
-                if (isHeic) {
-                    setIsConverting(true);
-                    try {
-                        const convertedBlob = await heic2any({
-                            blob: file,
-                            toType: "image/jpeg",
-                            quality: 0.8
-                        }) as Blob;
-                        
-                        file = new File([convertedBlob], file.name.replace(/\.heic$|\.heif$/i, '.jpg'), { type: 'image/jpeg' });
-                    } catch (error) {
-                        console.error("HEIC conversion failed:", error);
-                        alert("Kunde inte konvertera HEIC-bilden. Prova att välja en annan bild.");
-                        setIsConverting(false);
-                        return; // Stop processing
-                    }
+                setIsConverting(true);
+                try {
+                    file = await optimizeImageForUpload(
+                        file,
+                        { maxWidthOrHeight: 1600, maxSizeMB: 0.9, quality: 0.85 },
+                        (status) => setConversionStatus(status)
+                    );
+                } catch (optErr) {
+                    console.warn("Image optimization error, using original file:", optErr);
+                } finally {
                     setIsConverting(false);
                 }
             }
@@ -113,11 +103,9 @@ export default function CreateCommunityPostPage() {
         }
 
         setIsSubmitting(true);
+        setUploadProgress(0);
 
         try {
-            // Process Image or Video
-            let uploadBlob: Blob = imageFile as Blob;
-
             // Upload File
             let imageUrl = '';
             
@@ -135,23 +123,14 @@ export default function CreateCommunityPostPage() {
                     contentType: mediaType === 'video' ? (imageFile.type || 'video/mp4') : 'image/jpeg',
                 };
                 
-                const uploadTask = uploadBytesResumable(storageRef, uploadBlob, metadata);
-
-                imageUrl = await new Promise((resolve, reject) => {
-                    uploadTask.on('state_changed',
-                        (snapshot) => {
-                            const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-                            setUploadProgress(Math.round(progress));
-                        },
-                        (error) => {
-                            reject(error);
-                        },
-                        async () => {
-                            const downloadUrl = await getDownloadURL(uploadTask.snapshot.ref);
-                            resolve(downloadUrl);
-                        }
-                    );
-                });
+                // Resilient upload with automatic retry for mobile/skärgård connections
+                imageUrl = await uploadToStorageWithRetry(
+                    storageRef,
+                    imageFile,
+                    metadata,
+                    (progress) => setUploadProgress(progress),
+                    3
+                );
             } else if (!user) {
                 throw new Error("Du måste vara inloggad för att ladda upp.");
             }
@@ -220,7 +199,8 @@ export default function CreateCommunityPostPage() {
             router.push('/community');
         } catch (error: any) {
             console.error("Error creating post:", error);
-            alert("Kunde inte lägga upp: " + error.message);
+            const userMsg = formatStorageErrorMessage(error);
+            alert("Kunde inte lägga upp: " + userMsg);
         } finally {
             setIsSubmitting(false);
             setUploadProgress(0);
@@ -252,7 +232,7 @@ export default function CreateCommunityPostPage() {
                                 <label className="relative flex flex-col items-center justify-center p-6 border-2 border-dashed border-border rounded-xl cursor-pointer hover:border-primary/50 bg-secondary/5 transition-colors overflow-hidden">
                                     <Camera className="w-8 h-8 mb-2 text-teal-600" />
                                     <span className="text-sm font-medium">Ladda upp Bild</span>
-                                    <input key={`img-${inputKey}`} type="file" accept="image/jpeg, image/png, image/webp" className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" onChange={(e) => handleFileSelect(e, 'image')} />
+                                    <input key={`img-${inputKey}`} type="file" accept="image/*" className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" onChange={(e) => handleFileSelect(e, 'image')} />
                                 </label>
                                 <label className="relative flex flex-col items-center justify-center p-6 border-2 border-dashed border-border rounded-xl cursor-pointer hover:border-primary/50 bg-secondary/5 transition-colors overflow-hidden">
                                     <Video className="w-8 h-8 mb-2 text-teal-600" />
@@ -263,7 +243,7 @@ export default function CreateCommunityPostPage() {
                         ) : isConverting ? (
                             <div className="w-full aspect-video flex flex-col items-center justify-center rounded-xl border-2 border-border bg-secondary/10">
                                 <Loader2 className="w-10 h-10 animate-spin text-primary mb-2" />
-                                <p className="text-sm font-medium text-muted-foreground">Bearbetar bild (HEIC)...</p>
+                                <p className="text-sm font-medium text-muted-foreground">{conversionStatus}</p>
                             </div>
                         ) : (
                             <div className="w-full aspect-video relative rounded-xl overflow-hidden border-2 border-border shadow-sm">

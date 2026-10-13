@@ -7,10 +7,10 @@ import Image from 'next/image';
 import { useAuth } from '@/components/AuthProvider';
 import { AiResult } from '@/lib/types';
 import { collection, addDoc, serverTimestamp, doc, updateDoc, increment, setDoc } from 'firebase/firestore';
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { ref } from 'firebase/storage';
 import { db, storage } from '@/lib/firebase';
 import { useRouter } from 'next/navigation';
-import heic2any from 'heic2any';
+import { optimizeImageForUpload, uploadToStorageWithRetry, formatStorageErrorMessage } from '@/lib/media-upload';
 
 export default function FishIdentifier() {
     const { profile, user } = useAuth();
@@ -45,25 +45,15 @@ export default function FishIdentifier() {
         if (e.target.files && e.target.files[0]) {
             let file = e.target.files[0];
             
-            const isHeic = file.type === 'image/heic' || file.type === 'image/heif' || 
-                           file.name.toLowerCase().endsWith('.heic') || file.name.toLowerCase().endsWith('.heif');
-            
-            if (isHeic) {
-                setIsConverting(true);
-                try {
-                    const convertedBlob = await heic2any({
-                        blob: file,
-                        toType: "image/jpeg",
-                        quality: 0.8
-                    }) as Blob;
-                    
-                    file = new File([convertedBlob], file.name.replace(/\.heic$|\.heif$/i, '.jpg'), { type: 'image/jpeg' });
-                } catch (error) {
-                    console.error("HEIC conversion failed:", error);
-                    alert("Kunde inte konvertera HEIC-bilden. Prova att välja en annan bild.");
-                    setIsConverting(false);
-                    return; // Stop processing
-                }
+            setIsConverting(true);
+            try {
+                file = await optimizeImageForUpload(
+                    file,
+                    { maxWidthOrHeight: 1600, maxSizeMB: 0.9, quality: 0.85 }
+                );
+            } catch (error) {
+                console.error("Optimization failed:", error);
+            } finally {
                 setIsConverting(false);
             }
             
@@ -103,29 +93,26 @@ export default function FishIdentifier() {
         setLoading(true);
         try {
             // 1. Upload Image to Storage (or send as base64 to API)
-            // For MVP without real cloud functions, we might just simulate the analysis.
-            // But standard way: Upload -> Get URL -> Send URL to API.
-            // Or send file to API which uploads. 
-            // Let's assume we send file to API to keep client simple? 
-            // User requirement: "Ladda ner bilden från Storage" in Cloud Function.
-            // So Client uploads first.
-
             if (!user) return;
 
             let downloadUrl = previewUrl || '';
 
             if (storage && user.uid) {
                 try {
-                    let uploadBlob: Blob = imageFile as Blob;
-
                     const storageRef = ref(storage, `catches/${user.uid}/${Date.now()}_capture.jpg`);
-                    const uploadRes = await uploadBytes(storageRef, uploadBlob);
-                    downloadUrl = await getDownloadURL(uploadRes.ref);
+                    downloadUrl = await uploadToStorageWithRetry(
+                        storageRef,
+                        imageFile as Blob,
+                        { contentType: 'image/jpeg' },
+                        undefined,
+                        3
+                    );
                     setUploadedUrl(downloadUrl);
                     console.log("Image uploaded to Storage:", downloadUrl);
                 } catch (e) {
                     console.warn("Upload failed", e);
-                    alert("Kunde inte ladda upp bilden till molnet. Spara ändå för att spara lokalt.");
+                    const userMsg = formatStorageErrorMessage(e);
+                    alert("Kunde inte ladda upp bilden till molnet: " + userMsg);
                 }
             }
 

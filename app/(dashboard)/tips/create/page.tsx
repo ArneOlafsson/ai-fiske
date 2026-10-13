@@ -5,12 +5,13 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/components/AuthProvider';
 import { Button, Input, Card } from '@/components/ui/primitives';
-import { ref, getDownloadURL, uploadBytesResumable } from 'firebase/storage';
+import { ref } from 'firebase/storage';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { db, storage } from '@/lib/firebase';
 import { Loader2, Upload, AlertCircle, ArrowLeft, Camera, Video } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
+import { optimizeImageForUpload, uploadToStorageWithRetry, formatStorageErrorMessage } from '@/lib/media-upload';
 
 export default function CreateTipPage() {
     const { user, profile, loading } = useAuth();
@@ -22,6 +23,8 @@ export default function CreateTipPage() {
     const [previewUrl, setPreviewUrl] = useState<string | null>(null);
     const [mediaType, setMediaType] = useState<'image' | 'video'>('image');
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [isConverting, setIsConverting] = useState(false);
+    const [conversionStatus, setConversionStatus] = useState('Optimerar bild...');
     const [uploadProgress, setUploadProgress] = useState(0);
     const [inputKey, setInputKey] = useState(Date.now());
 
@@ -43,15 +46,15 @@ export default function CreateTipPage() {
         );
     }
 
-    const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>, explicitType: 'image' | 'video') => {
+    const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>, explicitType: 'image' | 'video') => {
         if (e.target.files && e.target.files[0]) {
-            const file = e.target.files[0];
+            let file = e.target.files[0];
             
             const isVideo = file.type.startsWith('video/');
-            const maxSize = isVideo ? 300 * 1024 * 1024 : 20 * 1024 * 1024; // 300MB video, 20MB image
+            const maxSize = isVideo ? 300 * 1024 * 1024 : 30 * 1024 * 1024; // 300MB video, 30MB image
             
             if (file.size > maxSize) {
-                alert(`Filen är för stor. Maxstorlek är ${isVideo ? '300MB för film' : '20MB för bild'}. Din fil är ${(file.size / (1024*1024)).toFixed(1)}MB.`);
+                alert(`Filen är för stor. Maxstorlek är ${isVideo ? '300MB för film' : '30MB för bild'}. Din fil är ${(file.size / (1024*1024)).toFixed(1)}MB.`);
                 return;
             }
             
@@ -62,6 +65,21 @@ export default function CreateTipPage() {
                 actualMediaType = 'image';
             }
             
+            if (actualMediaType === 'image') {
+                setIsConverting(true);
+                try {
+                    file = await optimizeImageForUpload(
+                        file,
+                        { maxWidthOrHeight: 1600, maxSizeMB: 0.9, quality: 0.85 },
+                        (status) => setConversionStatus(status)
+                    );
+                } catch (optErr) {
+                    console.warn("Image optimization error, using original file:", optErr);
+                } finally {
+                    setIsConverting(false);
+                }
+            }
+
             setMediaType(actualMediaType);
             setImageFile(file);
             setPreviewUrl(URL.createObjectURL(file));
@@ -85,6 +103,7 @@ export default function CreateTipPage() {
         }
 
         setIsSubmitting(true);
+        setUploadProgress(0);
 
         try {
             // 1. Upload Media
@@ -104,23 +123,13 @@ export default function CreateTipPage() {
                     contentType: mediaType === 'video' ? (imageFile.type || 'video/mp4') : (imageFile.type || 'image/jpeg'),
                 };
                 
-                const uploadTask = uploadBytesResumable(storageRef, imageFile, metadata);
-
-                imageUrl = await new Promise((resolve, reject) => {
-                    uploadTask.on('state_changed',
-                        (snapshot) => {
-                            const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-                            setUploadProgress(Math.round(progress));
-                        },
-                        (error) => {
-                            reject(error);
-                        },
-                        async () => {
-                            const downloadUrl = await getDownloadURL(uploadTask.snapshot.ref);
-                            resolve(downloadUrl);
-                        }
-                    );
-                });
+                imageUrl = await uploadToStorageWithRetry(
+                    storageRef,
+                    imageFile,
+                    metadata,
+                    (progress) => setUploadProgress(progress),
+                    3
+                );
             }
 
             // 2. Save Post
@@ -140,7 +149,8 @@ export default function CreateTipPage() {
             router.push('/tips');
         } catch (error: any) {
             console.error("Error creating post:", error);
-            alert("Kunde inte skapa inlägg: " + error.message);
+            const userMsg = formatStorageErrorMessage(error);
+            alert("Kunde inte skapa inlägg: " + userMsg);
         } finally {
             setIsSubmitting(false);
             setUploadProgress(0);
@@ -177,13 +187,18 @@ export default function CreateTipPage() {
                                 <label className="relative flex flex-col items-center justify-center p-6 border-2 border-dashed border-border rounded-xl cursor-pointer hover:border-primary/50 bg-secondary/5 transition-colors overflow-hidden">
                                     <Camera className="w-8 h-8 mb-2 text-teal-600" />
                                     <span className="text-sm font-medium">Ladda upp Bild</span>
-                                    <input key={`img-${inputKey}`} type="file" accept="image/jpeg, image/png, image/webp" className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" onChange={(e) => handleFileSelect(e, 'image')} />
+                                    <input key={`img-${inputKey}`} type="file" accept="image/*" className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" onChange={(e) => handleFileSelect(e, 'image')} />
                                 </label>
                                 <label className="relative flex flex-col items-center justify-center p-6 border-2 border-dashed border-border rounded-xl cursor-pointer hover:border-primary/50 bg-secondary/5 transition-colors overflow-hidden">
                                     <Video className="w-8 h-8 mb-2 text-teal-600" />
                                     <span className="text-sm font-medium">Ladda upp Film</span>
                                     <input key={`vid-${inputKey}`} type="file" accept="video/mp4, video/webm, video/quicktime" className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" onChange={(e) => handleFileSelect(e, 'video')} />
                                 </label>
+                            </div>
+                        ) : isConverting ? (
+                            <div className="w-full aspect-video flex flex-col items-center justify-center rounded-xl border-2 border-border bg-secondary/10">
+                                <Loader2 className="w-10 h-10 animate-spin text-primary mb-2" />
+                                <p className="text-sm font-medium text-muted-foreground">{conversionStatus}</p>
                             </div>
                         ) : (
                             <div className="w-full aspect-video relative rounded-xl overflow-hidden border-2 border-border shadow-sm">
@@ -216,7 +231,7 @@ export default function CreateTipPage() {
                         />
                     </div>
 
-                    <Button type="submit" className="w-full relative overflow-hidden" size="lg" disabled={isSubmitting || !imageFile}>
+                    <Button type="submit" className="w-full relative overflow-hidden" size="lg" disabled={isSubmitting || isConverting || !imageFile}>
                         {isSubmitting && (
                             <div 
                                 className="absolute left-0 top-0 bottom-0 bg-black/20 transition-all duration-300" 
