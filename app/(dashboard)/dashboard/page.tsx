@@ -21,6 +21,46 @@ export default function Dashboard() {
                 <p className="text-muted-foreground text-lg">Vad vill du göra idag?</p>
             </header>
 
+            {/* Nyhet: Ladda ner Bertlids Fiskeapp 2027 i App Store & Google Play */}
+            <div className="bg-gradient-to-r from-[#0B1E2D] via-[#132738] to-[#1E3A54] border-2 border-amber-500/80 rounded-2xl p-5 shadow-xl space-y-4">
+                <div className="flex items-start gap-3">
+                    <div className="bg-amber-500/20 p-2.5 rounded-xl border border-amber-500/40 shrink-0">
+                        <Crown className="w-6 h-6 text-amber-400" />
+                    </div>
+                    <div className="space-y-1">
+                        <span className="inline-block bg-amber-500 text-[#0B1E2D] text-[10px] font-extrabold uppercase tracking-wider px-2.5 py-0.5 rounded-full">
+                            NYHET – VERSION 2027 ÄR LIVE!
+                        </span>
+                        <h3 className="text-white font-bold text-lg md:text-xl">
+                            Bertlids Fiskeapp finns nu i App Store & Google Play! 🎣
+                        </h3>
+                        <p className="text-slate-300 text-sm leading-relaxed">
+                            Ladda ner vår nya riktiga mobilapp gratis och logga in med <strong>samma e-postadress och lösenord</strong> som du använder här – ditt konto och din PRO-status följer med automatiskt!
+                        </p>
+                    </div>
+                </div>
+                <div className="flex flex-col sm:flex-row gap-3 pt-1">
+                    <a
+                        href="https://apps.apple.com/se/app/bertlids-fiskeapp/id6825653909"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex-1 bg-white hover:bg-slate-100 text-[#0B1E2D] font-extrabold text-sm py-3 px-4 rounded-xl flex items-center justify-center gap-2 transition-colors shadow"
+                    >
+                        <span>🍎 Hämta i App Store (iPhone)</span>
+                        <ArrowUpRight className="w-4 h-4" />
+                    </a>
+                    <a
+                        href="https://play.google.com/store/apps/details?id=se.bertlids.fiskeapp"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex-1 bg-[#5EC4A1] hover:bg-[#4eb390] text-[#0B1E2D] font-extrabold text-sm py-3 px-4 rounded-xl flex items-center justify-center gap-2 transition-colors shadow"
+                    >
+                        <span>🤖 Ladda ned på Google Play (Android)</span>
+                        <ArrowUpRight className="w-4 h-4" />
+                    </a>
+                </div>
+            </div>
+
             {!isPremium ? (
                 <Link href="/profile" className="block">
                     <div className="bg-gradient-to-r from-[#3C8D71] to-[#5EC4A1] rounded-2xl p-5 flex flex-col sm:flex-row sm:items-center justify-between shadow-lg shadow-black/20 hover:scale-[1.02] transition-transform gap-4">

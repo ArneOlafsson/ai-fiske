@@ -67,6 +67,26 @@ export default function LandingPage() {
             <div className="hidden sm:block w-px h-10 bg-border mx-2"></div>
             <InstallPwaButton />
           </motion.div>
+
+          {/* Officiella App Store & Google Play knappar */}
+          <div className="mt-8 flex flex-col sm:flex-row gap-3 justify-center items-center max-w-lg mx-auto">
+            <a
+              href="https://apps.apple.com/se/app/bertlids-fiskeapp/id6825653909"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="w-full sm:w-auto bg-white hover:bg-slate-100 text-[#0B1E2D] font-bold text-sm py-3 px-6 rounded-full shadow-lg transition-transform hover:scale-105"
+            >
+              🍎 Hämta i App Store (iPhone)
+            </a>
+            <a
+              href="https://play.google.com/store/apps/details?id=se.bertlids.fiskeapp"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="w-full sm:w-auto bg-[#5EC4A1] hover:bg-[#4eb390] text-[#0B1E2D] font-bold text-sm py-3 px-6 rounded-full shadow-lg transition-transform hover:scale-105"
+            >
+              🤖 Ladda ned på Google Play (Android)
+            </a>
+          </div>
         </div>
       </section>
 
@@ -103,7 +123,7 @@ export default function LandingPage() {
             <div className="absolute top-0 right-0 bg-primary text-primary-foreground px-4 py-1 text-sm font-bold rounded-bl-xl">
               POPULÄR
             </div>
-            <h2 className="text-3xl font-bold mb-4 text-white">Helår 2026</h2>
+            <h2 className="text-3xl font-bold mb-4 text-white">Årsabonnemang</h2>
             <div className="text-6xl font-bold text-primary mb-6">
               299 kr <span className="text-xl text-slate-300 font-normal">/ år</span>
             </div>
@@ -115,15 +135,15 @@ export default function LandingPage() {
                 <span className="text-primary font-bold">✓</span> Obegränsad tillgång till community
               </li>
               <li className="flex items-center gap-3 font-medium">
-                <span className="text-primary font-bold">✓</span> Exklusiva recept och platstips
+                <span className="text-primary font-bold">✓</span> Exklusiva recept och hemliga smultronställen
               </li>
               <li className="flex items-center gap-3 font-medium">
-                <span className="text-primary font-bold">✓</span> Gäller hela 2026
+                <span className="text-primary font-bold">✓</span> 12 månaders löpande medlemskap – <span className="text-primary font-semibold">avsluta när som helst</span>
               </li>
             </ul>
             <Link href="/register">
               <Button size="lg" className="w-full md:w-auto min-w-[200px] text-lg font-bold text-primary-foreground bg-primary hover:bg-primary/90">
-                Skaffa Årskort Nu
+                Starta Årsabonnemang
               </Button>
             </Link>
           </Card>
