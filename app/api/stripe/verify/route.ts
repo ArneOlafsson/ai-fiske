@@ -35,18 +35,39 @@ export async function POST(request: Request) {
         }
 
         if (adminDb) {
-            // Update User in Firestore via Admin SDK (Bypasses security rules)
-            // premiumExpiresAt: End of 2026 (approx)
-            const endOf2026 = new Date('2026-12-31T23:59:59');
+            const userRef = adminDb.collection('users').doc(uid);
+            const userSnap = await userRef.get();
+            const userData = userSnap.data();
 
-            await adminDb.collection('users').doc(uid).update({
+            const currentExpires = userData?.premiumExpiresAt 
+                ? (userData.premiumExpiresAt.toDate ? userData.premiumExpiresAt.toDate() : new Date(userData.premiumExpiresAt)) 
+                : null;
+
+            // Om användaren har kvarvarande aktiv period, förläng med 12 månader från utgångsdatumet
+            // Annars 12 månader från idag.
+            const baseDate = (currentExpires && currentExpires.getTime() > Date.now()) ? currentExpires : new Date();
+            const newExpires = new Date(baseDate);
+            newExpires.setFullYear(newExpires.getFullYear() + 1);
+
+            const subscriptionId = session?.subscription 
+                ? (typeof session.subscription === 'string' ? session.subscription : (session.subscription as any)?.id) 
+                : null;
+            const customerId = session?.customer 
+                ? (typeof session.customer === 'string' ? session.customer : (session.customer as any)?.id) 
+                : null;
+
+            await userRef.update({
                 isPremium: true,
-                premiumType: 'lifetime', // Keeping lifetime enum for simplicity or change to 'year_2026'
-                premiumSince: FieldValue.serverTimestamp(),
-                premiumExpiresAt: endOf2026,
+                premiumType: 'subscription',
+                subscriptionStatus: 'active',
+                stripeCustomerId: customerId || userData?.stripeCustomerId || null,
+                stripeSubscriptionId: subscriptionId || userData?.stripeSubscriptionId || null,
+                premiumSince: userData?.premiumSince || FieldValue.serverTimestamp(),
+                premiumExpiresAt: newExpires,
                 stripePaymentStatus: 'paid',
                 stripeSessionId: session_id,
-                aiQuotaTotal: 1000, // Year 2026 Limit
+                aiQuotaTotal: 1000,
+                lastUpdatedBy: 'verify_subscription'
             });
 
             return NextResponse.json({ success: true });

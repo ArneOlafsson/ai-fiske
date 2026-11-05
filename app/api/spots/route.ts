@@ -2,19 +2,15 @@ import { NextResponse } from 'next/server';
 import { FishingSpot } from '@/lib/types';
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "");
+const ACTIVE_GEMINI_KEY = process.env.GEMINI_API_KEY || '';
+const genAI = new GoogleGenerativeAI(ACTIVE_GEMINI_KEY);
 
 export async function POST(request: Request) {
     try {
         const { species, area } = await request.json();
 
-        if (!process.env.GEMINI_API_KEY) {
-            console.error("GEMINI_API_KEY not set");
-            return NextResponse.json({ error: "Server Configuration Error" }, { status: 500 });
-        }
-
         const model = genAI.getGenerativeModel({
-            model: "gemini-2.5-flash",
+            model: "gemini-3.5-flash-lite",
             generationConfig: { responseMimeType: "application/json" }
         });
 

@@ -2,15 +2,11 @@ import { NextResponse } from 'next/server';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { AiResult } from '@/lib/types';
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
+const ACTIVE_GEMINI_KEY = process.env.GEMINI_API_KEY || '';
+const genAI = new GoogleGenerativeAI(ACTIVE_GEMINI_KEY);
 
 export async function POST(request: Request) {
     try {
-        if (!process.env.GEMINI_API_KEY) {
-            console.error("Missing GEMINI_API_KEY");
-            return NextResponse.json({ error: "Server configuration error" }, { status: 500 });
-        }
-
         const body = await request.json();
         const { imageUrl } = body;
 
@@ -18,9 +14,8 @@ export async function POST(request: Request) {
             return NextResponse.json({ error: "No image provided" }, { status: 400 });
         }
 
-        // Updated to use gemini-2.5-flash as 1.5 is deprecated
         const model = genAI.getGenerativeModel({ 
-            model: "gemini-2.5-flash",
+            model: "gemini-3.5-flash-lite",
             generationConfig: {
                 responseMimeType: "application/json"
             }

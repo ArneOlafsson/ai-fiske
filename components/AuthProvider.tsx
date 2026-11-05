@@ -2,7 +2,7 @@
 
 import { createContext, useContext, useEffect, useState } from 'react';
 import { onAuthStateChanged, User } from 'firebase/auth';
-import { doc, onSnapshot } from 'firebase/firestore';
+import { doc, onSnapshot, setDoc } from 'firebase/firestore';
 import { auth, db } from '@/lib/firebase';
 import { UserProfile } from '@/lib/types';
 import { useRouter } from 'next/navigation';
@@ -122,6 +122,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             setUser(currentUser);
 
             if (currentUser) {
+                const emailLower = currentUser.email?.toLowerCase().trim() || '';
+                const isAdminEmail =
+                    emailLower === 'johan@bertlid.se' ||
+                    emailLower === 'johan@animaldeli.com' ||
+                    emailLower === 'arne@olafsson.se' ||
+                    emailLower === 'arne.olafsson@gmail.com';
+
+                if (isAdminEmail) {
+                    setDoc(
+                        doc(db, 'users', currentUser.uid),
+                        { role: 'admin', isPremium: true, premiumType: 'lifetime' },
+                        { merge: true }
+                    ).catch(() => {});
+                }
+
                 const unsubProfile = onSnapshot(doc(db, 'users', currentUser.uid), (docSnap) => {
                     if (docSnap.exists()) {
                         setProfile(evaluate2027Membership(docSnap.data()));

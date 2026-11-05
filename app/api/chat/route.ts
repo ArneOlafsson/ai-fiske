@@ -1,18 +1,14 @@
 import { NextResponse } from 'next/server';
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "");
+const ACTIVE_GEMINI_KEY = process.env.GEMINI_API_KEY || '';
+const genAI = new GoogleGenerativeAI(ACTIVE_GEMINI_KEY);
 
 export async function POST(request: Request) {
     try {
         const { message, history } = await request.json();
 
-        if (!process.env.GEMINI_API_KEY) {
-            console.error("GEMINI_API_KEY not set");
-            return NextResponse.json({ error: "Server Configuration Error" }, { status: 500 });
-        }
-
-        const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+        const model = genAI.getGenerativeModel({ model: "gemini-3.5-flash-lite" });
 
         const chat = model.startChat({
             history: history.map((msg: any) => ({
@@ -33,8 +29,7 @@ export async function POST(request: Request) {
 
         // Re-initializing model with system instruction for better behavior
         const chatModel = genAI.getGenerativeModel({
-            model: "gemini-2.5-flash",
-            // Added instruction to avoid markdown formatting significantly
+            model: "gemini-3.5-flash-lite",
             systemInstruction: "Du är en expertguide för sportfiske i Sverige. Svara kortfattat, kunnigt och uppmuntrande på svenska. Använd INTE markdown-formatering (som fetstil **txt** eller punktlistor *). Skriv endast ren text i stycken. Om frågan inte handlar om fiske, försök leda tillbaka ämnet eller avböj vänligt."
         });
 

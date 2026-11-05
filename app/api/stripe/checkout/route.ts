@@ -62,15 +62,18 @@ export async function POST(request: Request) {
                     price_data: {
                         currency: 'sek',
                         product_data: {
-                            name: 'AI Fiskeassistent Premium 2026',
-                            description: 'Helårsprenumeration 2026 + Obegränsad AI',
+                            name: 'AI Fiskeassistent Premium – Årsabonnemang',
+                            description: '12 månaders löpande medlemskap med Obegränsad AI, smultronställen & community. Förnyas årligen (avsluta när som helst).',
                         },
                         unit_amount: 29900, // 299.00 SEK
+                        recurring: {
+                            interval: 'year',
+                        },
                     },
                     quantity: 1,
                 },
             ],
-            mode: 'payment',
+            mode: 'subscription',
             allow_promotion_codes: !discounts, // Only allow Stripe UI promo code if we haven't already applied one
             discounts: discounts,
             success_url: `${origin}/profile?payment=success&session_id={CHECKOUT_SESSION_ID}`,
@@ -78,6 +81,11 @@ export async function POST(request: Request) {
             customer_email: email,
             metadata: {
                 uid: uid,
+            },
+            subscription_data: {
+                metadata: {
+                    uid: uid,
+                },
             },
         });
 

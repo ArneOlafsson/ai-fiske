@@ -138,6 +138,30 @@ function ProfileContent() {
         }
     };
 
+    const [loadingPortal, setLoadingPortal] = useState(false);
+
+    const handleManageSubscription = async () => {
+        try {
+            if (!user) return;
+            setLoadingPortal(true);
+            const res = await fetch('/api/stripe/portal', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ uid: user.uid })
+            });
+            const data = await res.json();
+            if (data.url) {
+                window.location.href = data.url;
+            } else {
+                alert(data.error || "Kunde inte öppna kundportalen.");
+            }
+        } catch (err: any) {
+            alert("Ett fel uppstod: " + err.message);
+        } finally {
+            setLoadingPortal(false);
+        }
+    };
+
 
 
     const togglePublic = async (catchId: string, currentStatus: boolean) => {
@@ -242,7 +266,13 @@ function ProfileContent() {
                     <p className="text-muted-foreground">{profile.displayName || user.email}</p>
                     <div className="flex gap-2 mt-2 text-sm text-muted-foreground">
                         <span className="bg-secondary px-2 py-0.5 rounded">{profile.role === 'admin' ? 'Admin' : 'Medlem'}</span>
-                        {profile.isPremium && <span className="bg-primary/20 text-primary px-2 py-0.5 rounded font-bold">Premium 2026</span>}
+                        {profile.isPremium && (
+                            <span className="bg-primary/20 text-primary px-2 py-0.5 rounded font-bold">
+                                {profile.premiumType === 'subscription' 
+                                    ? 'Årsabonnemang' 
+                                    : (profile.premiumExpiresAt && profile.premiumExpiresAt.toDate().getFullYear() >= 2027 ? 'Premium 2027' : 'Premium 2026')}
+                            </span>
+                        )}
                     </div>
                 </div>
                 <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
@@ -257,57 +287,119 @@ function ProfileContent() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {/* Subscription Card */}
-                <Card className={`p-6 ${profile.isPremium ? 'border-primary/50 bg-primary/5' : 'border-amber-500/50 bg-amber-500/5'}`}>
-                    <div className="flex justify-between items-center mb-4">
-                        <h2 className="text-xl font-bold flex items-center gap-2">
-                            <Crown className={profile.isPremium ? 'text-primary' : 'text-amber-500'} />
-                            Prenumeration
-                        </h2>
-                        {profile.isPremium ? <Check className="text-primary w-6 h-6" /> : null}
-                    </div>
+                {(() => {
+                    const isSubscription = profile.premiumType === 'subscription';
+                    const isExtendedTo2027 = profile?.premiumExpiresAt && profile.premiumExpiresAt.toDate().getFullYear() >= 2027;
+                    const isExpiring2026 = profile.isPremium && !isSubscription && !isExtendedTo2027;
+                    const isFreeOrTrial = !profile.isPremium || profile.premiumType === 'trial';
 
-                    <div className="space-y-4">
-                        <div>
-                            <p className="text-sm font-medium text-muted-foreground mb-1">Status</p>
-                            <p className="text-xl font-bold">
-                                {profile.isPremium
-                                    ? (profile.premiumType === 'lifetime' ? 'Premium 2026' : 'Premium (Provperiod)')
-                                    : 'Gratiskonto (Begränsat)'}
-                            </p>
-                            {profile.premiumExpiresAt && (
-                                <p className="text-xs text-muted-foreground flex items-center gap-1 mt-1">
-                                    <Timer className="w-3 h-3" />
-                                    Går ut: {profile.premiumExpiresAt.toDate().toLocaleDateString()}
-                                </p>
-                            )}
-                        </div>
-
-                        <div>
-                            <p className="text-sm font-medium text-muted-foreground mb-1">AI-Kvot</p>
-                            <div className="flex items-center gap-2">
-                                <div className="flex-1 bg-secondary h-2 rounded-full overflow-hidden">
-                                    <div
-                                        className="bg-primary h-full"
-                                        style={{ width: `${Math.min(100, (profile.aiQuotaUsed / profile.aiQuotaTotal) * 100)}%` }}
-                                    />
-                                </div>
-                                <span className="text-sm font-bold">{profile.aiQuotaTotal - profile.aiQuotaUsed} kvar</span>
+                    return (
+                        <Card className={`p-6 ${profile.isPremium ? 'border-primary/50 bg-primary/5' : 'border-amber-500/50 bg-amber-500/5'}`}>
+                            <div className="flex justify-between items-center mb-4">
+                                <h2 className="text-xl font-bold flex items-center gap-2">
+                                    <Crown className={profile.isPremium ? 'text-primary' : 'text-amber-500'} />
+                                    Prenumeration
+                                </h2>
+                                {profile.isPremium ? <Check className="text-primary w-6 h-6" /> : null}
                             </div>
-                        </div>
 
-                        {(!profile.isPremium || profile.premiumType === 'trial') && (
                             <div className="space-y-4">
-                                <Button
-                                    onClick={handleBuyPremium}
-                                    disabled={loadingPayment}
-                                    className="w-full bg-orange-500 hover:bg-orange-600 text-white font-bold h-12"
-                                >
-                                    {loadingPayment ? 'Startar betalning...' : (profile.isPremium ? 'Uppgradera till Helår 2026 (299 kr)' : 'Köp Årskort 2026 (299 kr)')}
-                                </Button>
+                                <div>
+                                    <p className="text-sm font-medium text-muted-foreground mb-1">Status</p>
+                                    <p className="text-xl font-bold">
+                                        {isSubscription
+                                            ? 'Löpande Årsabonnemang'
+                                            : (isExtendedTo2027
+                                                ? 'Premium Helår 2027 (Klar)'
+                                                : (isExpiring2026
+                                                    ? 'Premium Helår 2026 (Löper ut inom kort)'
+                                                    : (profile.premiumType === 'trial' ? 'Premium (Provperiod)' : 'Gratiskonto (Begränsat)')))}
+                                    </p>
+                                    {profile.premiumExpiresAt && (
+                                        <p className="text-xs text-muted-foreground flex items-center gap-1 mt-1">
+                                            <Timer className="w-3 h-3" />
+                                            {isSubscription && profile.subscriptionStatus !== 'canceled' ? 'Förnyas: ' : 'Går ut: '}
+                                            {profile.premiumExpiresAt.toDate().toLocaleDateString('sv-SE')}
+                                        </p>
+                                    )}
+                                </div>
+
+                                <div>
+                                    <p className="text-sm font-medium text-muted-foreground mb-1">AI-Kvot</p>
+                                    <div className="flex items-center gap-2">
+                                        <div className="flex-1 bg-secondary h-2 rounded-full overflow-hidden">
+                                            <div
+                                                className="bg-primary h-full"
+                                                style={{ width: `${Math.min(100, (profile.aiQuotaUsed / profile.aiQuotaTotal) * 100)}%` }}
+                                            />
+                                        </div>
+                                        <span className="text-sm font-bold">{profile.aiQuotaTotal - profile.aiQuotaUsed} kvar</span>
+                                    </div>
+                                </div>
+
+                                {/* 1. Aktivt abonnemang */}
+                                {isSubscription && profile.stripeCustomerId && (
+                                    <div className="space-y-2 pt-2 border-t border-border/50">
+                                        <p className="text-xs text-muted-foreground">
+                                            Ditt abonnemang förnyas automatiskt var 12:e månad (299 kr).
+                                        </p>
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
+                                            onClick={handleManageSubscription}
+                                            disabled={loadingPortal}
+                                            className="w-full text-xs"
+                                        >
+                                            {loadingPortal ? 'Öppnar portal...' : 'Hantera eller säg upp abonnemang'}
+                                        </Button>
+                                    </div>
+                                )}
+
+                                {/* 2. Q4-betalare som redan har 2027 klart */}
+                                {isExtendedTo2027 && !isSubscription && (
+                                    <div className="p-3 bg-primary/10 rounded-lg border border-primary/20 text-sm">
+                                        <p className="text-primary font-medium">✓ Säsong 2027 är säkrad!</p>
+                                        <p className="text-muted-foreground text-xs mt-1">
+                                            Ditt medlemskap gäller hela vägen t.o.m. 31 december 2027. Du behöver inte förnya förrän inför säsongen 2028.
+                                        </p>
+                                    </div>
+                                )}
+
+                                {/* 3. Tidigare 2026-betalare som kan välja abonnemang nu */}
+                                {isExpiring2026 && (
+                                    <div className="space-y-3 pt-2 border-t border-border/50">
+                                        <div className="p-3 bg-amber-500/10 rounded-lg border border-amber-500/20 text-xs text-amber-200">
+                                            Ditt årskort löper ut 31 dec 2026. Byt till årsabonnemang nu för att förlänga med 12 månader!
+                                        </div>
+                                        <Button
+                                            onClick={handleBuyPremium}
+                                            disabled={loadingPayment}
+                                            className="w-full bg-orange-500 hover:bg-orange-600 text-white font-bold h-12"
+                                        >
+                                            {loadingPayment ? 'Startar betalning...' : 'Välj Årsabonnemang (299 kr/år – förläng 12 mån)'}
+                                        </Button>
+                                    </div>
+                                )}
+
+                                {/* 4. Gratiskonton eller provperioder */}
+                                {isFreeOrTrial && (
+                                    <div className="space-y-3">
+                                        <Button
+                                            onClick={handleBuyPremium}
+                                            disabled={loadingPayment}
+                                            className="w-full bg-orange-500 hover:bg-orange-600 text-white font-bold h-12"
+                                        >
+                                            {loadingPayment ? 'Startar betalning...' : 'Starta Årsabonnemang (299 kr/år – 12 månader)'}
+                                        </Button>
+                                        <p className="text-center text-xs text-muted-foreground">
+                                            12 månaders löpande medlemskap. Avsluta när som helst.
+                                        </p>
+                                    </div>
+                                )}
                             </div>
-                        )}
-                    </div>
-                </Card>
+                        </Card>
+                    );
+                })()}
 
                 {/* Stats Card */}
                 <Card className="p-6">
