@@ -96,7 +96,7 @@ service cloud.firestore {
           (exists(/databases/$(database)/documents/users/$(request.auth.uid)) && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin')
         );
         
-        // Comments subcollection
+         // Comments subcollection
         match /comments/{commentId} {
              allow read: if true; 
              allow create, update: if request.auth != null && 
@@ -109,6 +109,27 @@ service cloud.firestore {
                (exists(/databases/$(database)/documents/users/$(request.auth.uid)) && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin')
              );
         }
+    }
+
+    // PRO VIP Klubb Events & Deals
+    match /vip_events/{eventId} {
+      allow read: if true;
+      allow create, update, delete: if request.auth != null && (
+        (request.auth.token.email != null && (request.auth.token.email == 'arne@olafsson.se' || request.auth.token.email == 'arne.olafsson@gmail.com')) ||
+        (request.auth.token.email != null && (request.auth.token.email == 'johan@animaldeli.com' || request.auth.token.email == 'johan@bertlid.se')) ||
+        (exists(/databases/$(database)/documents/users/$(request.auth.uid)) && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin')
+      );
+    }
+
+    // Daily Spots ("Vart hittade vi fisken idag")
+    match /daily_spots/{spotId} {
+      allow read: if true;
+      allow create, update: if request.auth != null;
+      allow delete: if request.auth != null && (
+        (request.auth.token.email != null && (request.auth.token.email == 'arne@olafsson.se' || request.auth.token.email == 'arne.olafsson@gmail.com')) ||
+        (request.auth.token.email != null && (request.auth.token.email == 'johan@animaldeli.com' || request.auth.token.email == 'johan@bertlid.se')) ||
+        (exists(/databases/$(database)/documents/users/$(request.auth.uid)) && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin')
+      );
     }
   }
 }
