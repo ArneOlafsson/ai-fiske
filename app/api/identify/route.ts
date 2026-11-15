@@ -55,8 +55,8 @@ export async function POST(request: Request) {
                 ]);
 
                 const paywallDateStr = configSnap.exists
-                    ? configSnap.data()?.paywallStartDate || '2026-12-01'
-                    : '2026-12-01';
+                    ? configSnap.data()?.paywallStartDate || '2026-11-15'
+                    : '2026-11-15';
                 const paywallActive = Date.now() >= new Date(`${paywallDateStr}T00:00:00+01:00`).getTime();
 
                 const userData = userSnap.exists ? userSnap.data() : null;
