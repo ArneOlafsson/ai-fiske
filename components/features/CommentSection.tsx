@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '@/components/AuthProvider';
 import { Button, Input } from '@/components/ui/primitives';
 import { db } from '@/lib/firebase';
-import { collection, addDoc, query, orderBy, onSnapshot, serverTimestamp, deleteDoc, doc, updateDoc, increment } from 'firebase/firestore';
+import { collection, addDoc, query, orderBy, onSnapshot, serverTimestamp, deleteDoc, doc, updateDoc, increment, arrayUnion } from 'firebase/firestore';
 import { Comment } from '@/lib/types';
 import { MessageSquare, Trash2, Send } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
@@ -111,17 +111,27 @@ export default function CommentSection({ catchId, count = 0 }: CommentSectionPro
                 return;
             }
 
-            await addDoc(collection(db, 'catches', catchId, 'comments'), {
+            const authorDisplayName = profile?.displayName || user.email?.split('@')[0] || 'Anonym';
+            const trimmedText = newComment.trim();
+
+            const createdRef = await addDoc(collection(db, 'catches', catchId, 'comments'), {
                 uid: user.uid,
-                displayName: profile?.displayName || user.email?.split('@')[0] || 'Anonym',
+                displayName: authorDisplayName,
                 photoURL: profile?.photoURL || user.photoURL,
-                text: newComment.trim(),
+                text: trimmedText,
                 createdAt: serverTimestamp()
             });
 
-            // Update parent count
+            // Update parent count & mirror into commentsList so mobile apps see web comments immediately
             await updateDoc(doc(db, 'catches', catchId), {
-                commentsCount: increment(1)
+                commentsCount: increment(1),
+                commentsList: arrayUnion({
+                    id: createdRef.id,
+                    authorName: authorDisplayName,
+                    authorUid: user.uid,
+                    text: trimmedText,
+                    createdAtMs: Date.now(),
+                }),
             });
 
             setNewComment('');
