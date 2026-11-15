@@ -147,6 +147,7 @@ export default function CreateCommunityPostPage() {
                 isPublic: true,
                 likesCount: 0,
                 commentsCount: 0,
+                clientVersionInt: 20270,
                 createdAt: Timestamp.now(),
                 aiResult: {
                     fishNameSv: species || 'Fångst',

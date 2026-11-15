@@ -79,7 +79,8 @@ export async function POST(request: Request) {
     // Automatisk årlig förnyelse när nästa faktura dras efter 12 månader
     if (event.type === 'invoice.payment_succeeded') {
         const invoice = event.data.object as Stripe.Invoice;
-        const subId = typeof invoice.subscription === 'string' ? invoice.subscription : (invoice.subscription as any)?.id;
+        const rawSub = (invoice as any).subscription ?? (invoice as any).parent?.subscription_details?.subscription;
+        const subId = typeof rawSub === 'string' ? rawSub : rawSub?.id;
         
         if (subId && adminDb && invoice.billing_reason === 'subscription_cycle') {
             console.log(`Processing subscription renewal for ${subId}`);
