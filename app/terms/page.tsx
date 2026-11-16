@@ -1,49 +1,45 @@
 export default function TermsPage() {
     return (
         <div className="container mx-auto px-4 py-8 max-w-3xl text-gray-800 dark:text-gray-200">
-            <h1 className="text-3xl font-bold mb-6">Användarvillkor (Terms of Service)</h1>
-            <p className="mb-4 text-sm text-gray-500">Senast uppdaterad: 2026-01-30</p>
+            <h1 className="text-3xl font-bold mb-6">Användarvillkor &amp; EULA – Bertlids Fiskeapp</h1>
+            <p className="mb-4 text-sm text-gray-500">Senast uppdaterad: 2026-11-15</p>
 
             <section className="mb-6">
                 <h2 className="text-xl font-semibold mb-2">1. Allmänt</h2>
                 <p>
-                    Välkommen till AI Fiskeassistenten ("Tjänsten"). Genom att använda vår app godkänner du dessa villkor.
-                    Tjänsten tillhandahålls av [Ditt Företagsnamn/Du].
+                    Dessa användarvillkor (&quot;Villkoren&quot;) reglerar din användning av applikationen Bertlids Fiskeapp och tillhörande webbtjänster,
+                    vilka tillhandahålls av Olafsson Atwork Consulting AB (Lilla Torget 4, 761 30 Norrtälje). Genom att använda appen godkänner du dessa villkor.
                 </p>
             </section>
 
             <section className="mb-6">
-                <h2 className="text-xl font-semibold mb-2">2. Tjänsten</h2>
-                <p>
-                    AI Fiskeassistenten erbjuder AI-baserad identifiering av fiskarter, chattfunktioner och kartor över fiskevatten.
-                    Vi garanterar inte att AI-identifieringen alltid är 100% korrekt. Var god konsultera lokala regler och experter vid osäkerhet.
-                </p>
-            </section>
-
-            <section className="mb-6">
-                <h2 className="text-xl font-semibold mb-2">3. Prenumeration och Betalning</h2>
-                <p>
-                    Vissa funktioner kräver ett Premium-medlemskap.
-                </p>
+                <h2 className="text-xl font-semibold mb-2">2. Bertlid PRO – Prenumeration &amp; Betalning</h2>
                 <ul className="list-disc pl-5 space-y-1">
-                    <li><strong>Premium Helår 2026:</strong> En engångskostnad på 299 SEK ger tillgång till Premium-funktioner under kalenderåret 2026.</li>
-                    <li>Betalning sker säkert via Stripe. Vi lagrar inga kortuppgifter.</li>
-                    <li>Ditt medlemskap är personligt och får inte delas.</li>
+                    <li><strong>Bertlid PRO Årskort:</strong> 299 kr/år (förnyas automatiskt årsvis).</li>
+                    <li><strong>Bertlid PRO Månadskort:</strong> 49 kr/mån (förnyas automatiskt månadsvis).</li>
+                    <li>Prenumerationen debiteras ditt Apple-ID-konto eller Google Play-konto vid bekräftelse av köp och förnyas automatiskt om den inte sägs upp minst 24 timmar före innevarande periods slut.</li>
+                    <li>Du kan när som helst hantera eller avsluta din prenumeration i kontoinställningarna i App Store eller Google Play.</li>
                 </ul>
             </section>
 
             <section className="mb-6">
-                <h2 className="text-xl font-semibold mb-2">4. Ångerrätt och Återbetalning</h2>
+                <h2 className="text-xl font-semibold mb-2">3. Trivselregler och Användargenererat Innehåll</h2>
                 <p>
-                    Enligt distansavtalslagen har du normalt 14 dagars ångerrätt. Om du börjar använda digitala tjänsten (t.ex. genom att använda Premium-funktioner)
-                    kan ångerrätten förbrukas. Kontakta oss på support@ai-fiske.se vid frågor om återbetalning.
+                    Vi tillämpar nolltolerans mot stötande, kränkande eller olagligt innehåll i Community-flödet. Användare kan direkt i appen anmäla inlägg eller blockera andra användare.
                 </p>
             </section>
 
             <section className="mb-6">
-                <h2 className="text-xl font-semibold mb-2">5. Användardata</h2>
+                <h2 className="text-xl font-semibold mb-2">4. Ansvarsfriskrivning</h2>
                 <p>
-                    Vi värnar om din integritet. Se vår Integritetspolicy för detaljer om hur vi hanterar dina personuppgifter.
+                    AI-artbestämning, väderdata och huggprognoser tillhandahålls som vägledande beslutsstöd. Kontrollera alltid lokala fiskeregler och iaktta god sjösäkerhet.
+                </p>
+            </section>
+
+            <section className="mb-6">
+                <h2 className="text-xl font-semibold mb-2">5. Kontakt &amp; Integritet</h2>
+                <p>
+                    Se vår integritetspolicy på <a href="https://bertlid.se/integritetspolicy/" className="underline">bertlid.se/integritetspolicy</a> och fullständiga villkor på <a href="https://bertlid.se/villkor/" className="underline">bertlid.se/villkor</a>. Kontakt: support@bertlid.se.
                 </p>
             </section>
         </div>
