@@ -214,6 +214,7 @@ export default function FishIdentifier() {
                 await Promise.race([
                     addDoc(collection(db, 'catches'), {
                         ...baseCatchData,
+                        clientVersionInt: 20270,
                         createdAt: serverTimestamp()
                     }),
                     timeout

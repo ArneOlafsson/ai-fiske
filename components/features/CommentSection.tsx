@@ -119,6 +119,7 @@ export default function CommentSection({ catchId, count = 0 }: CommentSectionPro
                 displayName: authorDisplayName,
                 photoURL: profile?.photoURL || user.photoURL,
                 text: trimmedText,
+                clientVersionInt: 20270,
                 createdAt: serverTimestamp()
             });
 
