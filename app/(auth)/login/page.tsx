@@ -100,7 +100,12 @@ export default function LoginPage() {
                         />
                     </div>
                     <div>
-                        <label className="text-sm font-medium mb-1 block">Lösenord</label>
+                        <div className="flex items-center justify-between mb-1">
+                            <label className="text-sm font-medium block">Lösenord</label>
+                            <Link href="/reset-password" className="text-xs text-primary hover:underline">
+                                Glömt lösenord?
+                            </Link>
+                        </div>
                         <Input
                             type="password"
                             value={password}
