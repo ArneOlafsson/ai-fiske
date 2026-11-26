@@ -138,6 +138,12 @@ service cloud.firestore {
       allow create, update, delete: if isAdminUser();
     }
 
+    // Time-controlled Campaign & Partner Ads
+    match /ads/{adId} {
+      allow read: if true;
+      allow create, update, delete: if isAdminUser();
+    }
+
     // Daily Spots ("Vart hittade vi fisken idag")
     match /daily_spots/{spotId} {
       allow read: if true;
