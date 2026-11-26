@@ -367,6 +367,17 @@ export default function CommunityPage() {
                                 <p className="text-foreground/90 italic mb-4">"{item.comment}"</p>
                             )}
 
+                            {(item as any).ctaUrl && (
+                                <a
+                                    href={(item as any).ctaUrl}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="mb-4 w-full bg-amber-500 hover:bg-amber-400 text-[#0B1E2D] font-extrabold text-sm py-3 px-4 rounded-xl flex items-center justify-center gap-2 transition-colors shadow"
+                                >
+                                    <span>{(item as any).ctaText || 'Besök webbplatsen ➔'}</span>
+                                </a>
+                            )}
+
                             <div className="flex flex-col gap-4 border-t border-border pt-4 mt-auto">
                                 <div className="flex items-center justify-between">
                                     <div className="flex items-center gap-2">
