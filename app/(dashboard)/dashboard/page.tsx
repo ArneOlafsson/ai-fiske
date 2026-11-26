@@ -166,18 +166,27 @@ export default function Dashboard() {
             
              <div className="mt-8 pt-6 border-t border-[#1E3A54] space-y-4">
                 <h2 className="text-muted-foreground font-bold text-xs tracking-widest uppercase mb-4">Erbjudanden</h2>
+                {Date.now() <= new Date('2026-11-30T23:59:59+01:00').getTime() && (
+                    <SponsorCard
+                        title="🔥 Expertfiske – Black Friday (10% på alla presentkort)"
+                        desc="Ge bort ett fiskeäventyr i julklapp – eller till dig själv! 10 % rabatt på presentkort med valfritt belopp för havsöringsguidning, flugkastkurser & guidade båtturer (köp senast 31 dec 2026)."
+                        image="https://firebasestorage.googleapis.com/v0/b/ai-fiske-app-2026.firebasestorage.app/o/equipment%2Fexpertfiske_black_friday_2026.jpg?alt=media&token=58b753fc-bf9c-4a65-9425-66511eb8dad6"
+                        cta="Besök www.expertfiske.com ➔"
+                        href="https://www.expertfiske.com"
+                    />
+                )}
                 <SponsorCard
                     title="Fiskedags.se"
                     desc="Allt för ditt fiske! Stort sortiment av spön, rullar, beten och tillbehör för alla fiskemetoder – både online och i butik. Kod Bertlid10 ger 10% rabatt."
                     image="/ads/fiskedags.png"
-                    cta="Gå till butik"
+                    cta="Besök www.fiskedags.se ➔"
                     href="https://www.fiskedags.se/"
                 />
                 <SponsorCard
                     title="Animal Deli"
                     desc="Naturligt hundgodis för din bästa fiskekompis. Perfekt i båten! Kod BERTLID1 ger 50%."
                     image="/ads/animal-deli.png"
-                    cta="Gå till butik"
+                    cta="Besök www.animaldeli.com ➔"
                     href="https://animaldeli.com/"
                     invertLogo
                 />
